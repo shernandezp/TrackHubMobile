@@ -11,6 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		Directory.Packages.props = Directory.Packages.props
+		README.en.md = README.en.md
+		README.es.md = README.es.md
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global
@@ -35,5 +38,6 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		        SolutionGuid = {9851C755-B3E3-4DA4-98AA-F5B5F36A6C1E}
+		SolutionGuid = {ACBCD271-70B6-46B5-BD3A-869AAC6AE6AB}
 	EndGlobalSection
 EndGlobal
