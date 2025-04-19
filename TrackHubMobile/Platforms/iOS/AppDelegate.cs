@@ -1,5 +1,5 @@
 ﻿using Foundation;
-using TrackHubMobile.Services.Interfaces;
+using TrackHubMobile.Interfaces.Services;
 using UIKit;
 
 namespace TrackHubMobile;
@@ -22,7 +22,7 @@ public class AppDelegate : MauiUIApplicationDelegate
         {
             MainThread.BeginInvokeOnMainThread(async () =>
             {
-                var authService = IPlatformApplication.Current?.Services.GetService<IAuthenticationService>();
+                var authService = IPlatformApplication.Current?.Services.GetService<IAuthentication>();
                 if (authService != null)
                 {
                     await authService.LoginAsync();

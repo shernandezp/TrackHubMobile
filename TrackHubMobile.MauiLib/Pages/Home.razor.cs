@@ -13,14 +13,31 @@
 //  limitations under the License.
 //
 
+using Microsoft.AspNetCore.Components;
 using TrackHubMobile.Interfaces.Services;
 
-namespace TrackHubMobile.ViewModels;
+namespace TrackHubMobile.Pages;
 
-public partial class MainViewModel(IAuthentication authService) : BaseViewModel("Home")
+public partial class Home(
+    IDataRefresh refresh,
+    NavigationManager navigationManager) : ActiveScreenComponentBase(refresh, navigationManager)
 {
-    public async Task InitializeAsync()
+
+    private void NavigateToListView()
     {
-        await authService.LoginAsync();
+        // Replace with actual navigation logic
+        Navigation.NavigateTo("/listview");
     }
+
+    private void NavigateToMapView()
+    {
+        // Replace with actual navigation logic
+        Navigation.NavigateTo("/counter");
+    }
+
+    protected override void OnInitialized()
+    {
+        ViewModel.OnUpdated = StateHasChanged;
+    }
+
 }

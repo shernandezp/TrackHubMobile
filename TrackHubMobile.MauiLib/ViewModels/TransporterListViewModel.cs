@@ -14,13 +14,29 @@
 //
 
 using TrackHubMobile.Interfaces.Services;
+using TrackHubMobile.Models;
 
 namespace TrackHubMobile.ViewModels;
 
-public partial class MainViewModel(IAuthentication authService) : BaseViewModel("Home")
+public partial class TransporterListViewModel(IRouter router, IDataRefresh dataRefresh) : BaseViewModel
 {
-    public async Task InitializeAsync()
+    [ObservableProperty]
+    private IEnumerable<PositionVm>? transporters = null;
+    [ObservableProperty]
+    private bool isRefreshing;
+
+    public async Task RefreshDataAsync(CancellationToken cancellationToken)
     {
-        await authService.LoginAsync();
+        Transporters = null;
+        IsRefreshing = true;
+        try
+        {
+            Transporters = await router.GetDevicePositionsByUserAsync(cancellationToken);
+            dataRefresh.Transporters = Transporters;
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 }

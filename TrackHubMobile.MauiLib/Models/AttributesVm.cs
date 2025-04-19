@@ -13,14 +13,12 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Interfaces.Services;
+namespace TrackHubMobile.Models;
 
-namespace TrackHubMobile.ViewModels;
-
-public partial class MainViewModel(IAuthentication authService) : BaseViewModel("Home")
-{
-    public async Task InitializeAsync()
-    {
-        await authService.LoginAsync();
-    }
-}
+public readonly record struct AttributesVm(
+    bool? Ignition,
+    int? Satellites,
+    double? Mileage,
+    double? Hourmeter,
+    double? Temperature
+);

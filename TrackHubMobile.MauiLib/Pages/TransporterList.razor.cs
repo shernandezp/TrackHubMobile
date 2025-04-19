@@ -13,14 +13,22 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Interfaces.Services;
+namespace TrackHubMobile.Pages;
 
-namespace TrackHubMobile.ViewModels;
-
-public partial class MainViewModel(IAuthentication authService) : BaseViewModel("Home")
+public partial class TransporterList
 {
-    public async Task InitializeAsync()
+
+    private string? tableStyle;
+
+    protected override async Task OnInitializedAsync()
     {
-        await authService.LoginAsync();
+        tableStyle = appInfo.RequestedTheme switch
+        {
+            AppTheme.Dark => "table table-dark",
+            _ => "table"
+        };
+
+        await ViewModel.RefreshDataAsync(CancellationToken.None);
     }
+
 }

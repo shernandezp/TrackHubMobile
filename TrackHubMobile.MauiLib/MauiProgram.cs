@@ -13,11 +13,10 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Data;
-using TrackHubMobile.Interfaces;
+using TrackHubMobile.Helpers;
+using TrackHubMobile.Interfaces.Helpers;
+using TrackHubMobile.Interfaces.Services;
 using TrackHubMobile.Services;
-using TrackHubMobile.Services.Interfaces;
-using TrackHubMobile.Utils;
 
 namespace TrackHubMobile;
 
@@ -35,20 +34,32 @@ public static partial class MauiProgram
                    fonts.AddFont("OpenSans-SemiBold.ttf", "OpenSansSemiBold");
                });
 
+        builder.Services.AddSingleton<HomeViewModel>();
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<NavMenuViewModel>();
+        builder.Services.AddSingleton<TransporterListViewModel>();
         // Singleton will not allow NavigationManager to be injected
         builder.Services.AddSingleton<MainPage>();
 
-        builder.Services.AddHttpClient();
+        //builder.Services.AddHttpClient();
+        builder.Services.AddHttpClient("GraphQL", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+        builder.Services.AddHttpClient("Auth");
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddSingleton(AppInfo.Current);
-        builder.Services.AddSingleton<WeatherForecastService>();
+        builder.Services.AddSingleton<IDataRefresh, DataRefresh>();
 
-        builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+        builder.Services.AddSingleton<IAuthentication, Authentication>();
         builder.Services.AddSingleton<ILocalizationResourceManager, LocalizationResourceManager>();
+        builder.Services.AddSingleton<IGraphQLReader, GraphQLReader>();
         builder.Services.AddSingleton<IStorage, Storage>();
+        builder.Services.AddSingleton<IRouter, Router>();
 
-        return builder.Build();
+        var app = builder.Build();
+        ServiceHelper.Services = app.Services;
+
+        return app;
     }
 }

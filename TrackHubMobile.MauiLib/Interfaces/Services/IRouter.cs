@@ -13,14 +13,11 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Interfaces.Services;
+using TrackHubMobile.Models;
 
-namespace TrackHubMobile.ViewModels;
+namespace TrackHubMobile.Interfaces.Services;
 
-public partial class MainViewModel(IAuthentication authService) : BaseViewModel("Home")
+public interface IRouter
 {
-    public async Task InitializeAsync()
-    {
-        await authService.LoginAsync();
-    }
+    Task<IEnumerable<PositionVm>> GetDevicePositionsByUserAsync(CancellationToken cancellationToken);
 }

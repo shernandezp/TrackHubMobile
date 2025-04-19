@@ -24,7 +24,7 @@
         <ApplicationTitle>TrackHubMobile</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.c2ls.trackhubmobile</ApplicationId>
+        <ApplicationId>com.trackhubmobile</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>

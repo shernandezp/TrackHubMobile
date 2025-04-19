@@ -13,9 +13,11 @@
 //  limitations under the License.
 //
 
-namespace TrackHubMobile.Interfaces;
+namespace TrackHubMobile.Interfaces.Services;
 
-public interface ILocalizationResourceManager
+public interface IStorage
 {
-    string this[string key] { get; }
+    void ClearSecure(string key);
+    Task<string?> GetSecure(string key);
+    Task SetSecure(string key, string? value);
 }

@@ -61,6 +61,15 @@ namespace TrackHubMobile.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to List View.
+        /// </summary>
+        internal static string ListView {
+            get {
+                return ResourceManager.GetString("ListView", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Logout.
         /// </summary>
         internal static string Logout {

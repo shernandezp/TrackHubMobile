@@ -13,21 +13,9 @@
 //  limitations under the License.
 //
 
-using System.Globalization;
-using System.Resources;
-using TrackHubMobile.Interfaces;
-using TrackHubMobile.Resources;
+namespace TrackHubMobile.Interfaces.Helpers;
 
-namespace TrackHubMobile.Utils;
-
-public class LocalizationResourceManager : ILocalizationResourceManager
+public interface IGraphQLReader
 {
-    private readonly ResourceManager _resourceManager;
-
-    public LocalizationResourceManager()
-    {
-        _resourceManager = new ResourceManager(typeof(AppResources));
-    }
-
-    public string this[string key] => _resourceManager.GetString(key, CultureInfo.CurrentCulture) ?? string.Empty;
+    Task<T?> ExecuteGraphQLQuery<T>(string url, string query, string rootFieldName, CancellationToken cancellationToken);
 }

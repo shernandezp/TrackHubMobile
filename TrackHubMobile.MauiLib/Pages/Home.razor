@@ -1,7 +1,36 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+@inherits ActiveScreenComponentBase
+@inject HomeViewModel ViewModel
 
-Welcome to your new app.
+<h1 class="text-center my-4">Dashboard</h1>
+
+<div class="dashboard">
+    <div class="card total">
+        <h3>Total Units</h3>
+        <p>@ViewModel.Total</p>
+    </div>
+    <div class="card in-movement">
+        <h3>Units in Movement</h3>
+        <p>@ViewModel.InMovement</p>
+    </div>
+    <div class="card offline">
+        <h3>Units Offline</h3>
+        <p>@ViewModel.Offline</p>
+    </div>
+    <div class="card speeding">
+        <h3>Units Speeding</h3>
+        <p>@ViewModel.Speeding</p>
+    </div>
+</div>
+
+<div class="navigation-buttons">
+    <button class="btn btn-primary" @onclick="NavigateToListView">
+        <i class="fas fa-list"></i> List View
+    </button>
+    <button class="btn btn-secondary" @onclick="NavigateToMapView">
+        <i class="fas fa-map"></i> Map View
+    </button>
+</div>
 
 <SurveyPrompt Title="How is Blazor working for you?" />

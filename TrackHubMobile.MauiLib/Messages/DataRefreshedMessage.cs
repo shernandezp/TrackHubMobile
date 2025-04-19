@@ -13,15 +13,12 @@
 //  limitations under the License.
 //
 
-namespace TrackHubMobile.Services.Interfaces;
+using CommunityToolkit.Mvvm.Messaging.Messages;
+using TrackHubMobile.Models;
 
-public interface IAuthenticationService
+namespace TrackHubMobile.Messages;
+
+public class DataRefreshedMessage(IEnumerable<PositionVm> transporters) 
+    : ValueChangedMessage<IEnumerable<PositionVm>>(transporters)
 {
-    Task LoginAsync();
-    Task LogoutAsync();
-    /*Task<string> GetAuthorizeUrl();
-    Task ExchangeCodeForTokenAsync(string code);
-    Task RefreshAccessTokenAsync();
-    Task LogoutAsync();
-    Task RevokeTokenAsync(string? token);*/
 }

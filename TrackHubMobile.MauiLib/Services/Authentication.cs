@@ -17,13 +17,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Web;
-using TrackHubMobile.Services.Interfaces;
+using TrackHubMobile.Interfaces.Services;
 using TrackHubMobile.Utils;
 
 namespace TrackHubMobile.Services;
 
-public class AuthenticationService(HttpClient httpClient, IStorage storage) : IAuthenticationService
+public class Authentication(IHttpClientFactory httpClientFactory, IStorage storage) : IAuthentication
 {
+    private readonly HttpClient httpClient = httpClientFactory.CreateClient("Auth");
     /// <summary>
     /// Initiates the login process by generating a code verifier and challenge, 
     /// constructing the authentication URL, and handling the authentication response.
@@ -134,13 +135,14 @@ public class AuthenticationService(HttpClient httpClient, IStorage storage) : IA
     /// <summary>
     /// Refreshes the access token using the stored refresh token and updates the stored tokens.
     /// </summary>
-    public async Task RefreshAccessTokenAsync()
+    public async Task<string?> RefreshAccessTokenAsync()
     {
         var refreshToken = await storage.GetSecure(Constants.RefreshToken);
 
         if (string.IsNullOrEmpty(refreshToken))
         {
-            throw new InvalidOperationException("Refresh token is missing.");
+            await LoginAsync();
+            return null;
         }
 
         var tokenRequest = new FormUrlEncodedContent(
@@ -151,7 +153,11 @@ public class AuthenticationService(HttpClient httpClient, IStorage storage) : IA
         ]);
 
         var response = await httpClient.PostAsync(Constants.TokenUrl, tokenRequest);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            await LoginAsync();
+            return null;
+        }
 
         var responseContent = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(responseContent);
@@ -161,6 +167,7 @@ public class AuthenticationService(HttpClient httpClient, IStorage storage) : IA
         // Store the new tokens and expiration time
         await storage.SetSecure(Constants.AccessToken, newAccessToken);
         await storage.SetSecure(Constants.RefreshToken, newRefreshToken);
+        return newAccessToken;
     }
 
     /// <summary>

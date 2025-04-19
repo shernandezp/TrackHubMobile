@@ -21,6 +21,8 @@ public static class Constants
     public const string TokenUrl = "https://localhost/Identity/token";
     public const string RevokeUrl = "https://localhost/Identity/revoke";
     public const string LogoutUrl = "https://localhost/Identity/logout";
+    public const string RouterUrl = "https://localhost/Router/graphql";
+
 
     public const string CallbackUrl = "trackhubmobile://callback";
     public const string CallbackScheme = "trackhubmobile";

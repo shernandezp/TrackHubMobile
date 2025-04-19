@@ -13,14 +13,21 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Interfaces.Services;
+using System.Globalization;
+using System.Resources;
+using TrackHubMobile.Interfaces.Helpers;
+using TrackHubMobile.Resources;
 
-namespace TrackHubMobile.ViewModels;
+namespace TrackHubMobile.Helpers;
 
-public partial class MainViewModel(IAuthentication authService) : BaseViewModel("Home")
+public class LocalizationResourceManager : ILocalizationResourceManager
 {
-    public async Task InitializeAsync()
+    private readonly ResourceManager _resourceManager;
+
+    public LocalizationResourceManager()
     {
-        await authService.LoginAsync();
+        _resourceManager = new ResourceManager(typeof(AppResources));
     }
+
+    public string this[string key] => _resourceManager.GetString(key, CultureInfo.CurrentCulture) ?? string.Empty;
 }

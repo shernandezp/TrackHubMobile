@@ -13,12 +13,12 @@
 //  limitations under the License.
 //
 
-namespace TrackHubMobile.Services
+namespace TrackHubMobile.Helpers;
+
+public static class ServiceHelper
 {
-    public interface IStorage
-    {
-        void ClearSecure(string key);
-        Task<string?> GetSecure(string key);
-        Task SetSecure(string key, string? value);
-    }
+    public static IServiceProvider Services { get; set; }
+
+    public static T GetService<T>() where T : class =>
+        Services.GetService(typeof(T)) as T;
 }

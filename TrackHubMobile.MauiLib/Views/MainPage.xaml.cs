@@ -14,6 +14,7 @@
 //
 
 using System.Reflection;
+using TrackHubMobile.Services;
 
 namespace TrackHubMobile.Views;
 
@@ -35,4 +36,5 @@ public partial class MainPage : ContentPage
         base.OnAppearing();
         await viewModel.InitializeAsync();
     }
+
 }

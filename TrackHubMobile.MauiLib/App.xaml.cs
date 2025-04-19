@@ -13,6 +13,9 @@
 //  limitations under the License.
 //
 
+using TrackHubMobile.Helpers;
+using TrackHubMobile.Interfaces.Services;
+
 namespace TrackHubMobile;
 
 public partial class App : Application
@@ -34,6 +37,24 @@ public partial class App : Application
             Title = "TrackHubMobile"
         };
         return window;
+    }
+
+    protected async override void OnResume()
+    {
+        base.OnResume();
+        await SetAppActive(true, true);
+    }
+
+    protected async override void OnSleep()
+    {
+        base.OnSleep();
+        await SetAppActive(false);
+    }
+
+    private static async Task SetAppActive(bool isActive, bool forceRefresh = false)
+    {
+        var userActivityService = ServiceHelper.GetService<IDataRefresh>();
+        await userActivityService?.SetAppActive(isActive, forceRefresh);
     }
 
 }
