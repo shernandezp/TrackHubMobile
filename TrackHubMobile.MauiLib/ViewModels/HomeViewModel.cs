@@ -50,14 +50,19 @@ public partial class HomeViewModel : BaseViewModel
             var transporters = message.Value.ToList();
             var offlineThreshold = DateTimeOffset.UtcNow.AddHours(-2);
 
+            // Offline units report a stale last-known speed, so movement stats
+            // only consider online units — offline takes precedence.
+            var online = transporters.Where(t => t.DeviceDateTime >= offlineThreshold).ToList();
+            var moving = online.Where(t => t.Speed > 0).ToList();
+
             Total = transporters.Count;
-            InMovement = transporters.Count(t => t.Speed > 0);
-            Offline = transporters.Count(t => t.DeviceDateTime < offlineThreshold);
-            Stopped = Total - InMovement - Offline;
-            Speeding = transporters.Count(t => t.Speed > 80);
-            IgnitionOn = transporters.Count(t => t.Attributes?.Ignition == true);
-            AverageSpeed = transporters.Count > 0
-                ? Math.Round(transporters.Average(t => t.Speed), 1)
+            Offline = Total - online.Count;
+            InMovement = moving.Count;
+            Stopped = online.Count - moving.Count;
+            Speeding = moving.Count(t => t.Speed > 80);
+            IgnitionOn = online.Count(t => t.Attributes?.Ignition == true);
+            AverageSpeed = moving.Count > 0
+                ? Math.Round(moving.Average(t => t.Speed), 1)
                 : 0;
             LastGlobalUpdate = transporters.Count > 0
                 ? transporters.Max(t => t.DeviceDateTime)

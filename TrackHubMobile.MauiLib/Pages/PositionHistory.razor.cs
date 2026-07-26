@@ -175,7 +175,7 @@ public partial class PositionHistory : IDisposable
     {
         selectedTripId = trip.TripId;
 
-        if (!IsMoving(trip) || trip.Points is null || trip.Points.Count == 0)
+        if (trip.Points is null || trip.Points.Count == 0)
         {
             await ClearTrackAsync();
             return;
@@ -186,7 +186,10 @@ public partial class PositionHistory : IDisposable
             return;
         }
 
-        var points = trip.Points
+        // A stop segment renders as a single location marker; a moving trip as the full track
+        var tripPoints = IsMoving(trip) ? trip.Points : trip.Points.Take(1);
+
+        var points = tripPoints
             .Select(p => new
             {
                 lat = p.Latitude,

@@ -52,7 +52,7 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         {
             try
             {
-                await JS.InvokeVoidAsync("trackHubMap.initMap", Array.Empty<object>());
+                await JS.InvokeVoidAsync("trackHubMap.initMap", Array.Empty<object>(), BuildMapLabels());
                 mapInitialized = true;
                 await LoadInitialDataAsync();
             }
@@ -62,6 +62,20 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
             }
         }
     }
+
+    // Localized strings for the popups map.js builds on its own
+    private object BuildMapLabels() => new
+    {
+        moving = LRM["InMovement"],
+        stopped = LRM["Stopped"],
+        offline = LRM["Offline"],
+        justNow = LRM["JustNow"],
+        minutesAgo = LRM["MinutesAgo"],
+        hoursAgo = LRM["HoursAgo"],
+        daysAgo = LRM["DaysAgo"],
+        accOn = LRM["AccOn"],
+        accOff = LRM["AccOff"]
+    };
 
     private async Task LoadInitialDataAsync()
     {
@@ -75,11 +89,11 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
             if (!string.IsNullOrEmpty(TransporterIdParam) &&
                 Guid.TryParse(TransporterIdParam, out var tid))
             {
-                await FocusOnSingleUnit(tid);
+                await FocusOnSingleUnit(tid, preserveView: false);
             }
             else
             {
-                await UpdateMapMarkers(ViewModel.Transporters);
+                await UpdateMapMarkers(ViewModel.Transporters, fitView: true);
             }
         }
 
@@ -87,7 +101,7 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         StateHasChanged();
     }
 
-    private async Task FocusOnSingleUnit(Guid transporterId)
+    private async Task FocusOnSingleUnit(Guid transporterId, bool preserveView)
     {
         try
         {
@@ -95,27 +109,27 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
             if (device.DeviceDateTime != default)
             {
                 var jsObj = MapPositionToJs(device);
-                await JS.InvokeVoidAsync("trackHubMap.focusSingleUnit", jsObj);
+                await JS.InvokeVoidAsync("trackHubMap.focusSingleUnit", jsObj, preserveView);
             }
         }
         catch
         {
             // If single unit fetch fails, show all markers instead
-            if (ViewModel.Transporters is not null)
+            if (!preserveView && ViewModel.Transporters is not null)
             {
-                await UpdateMapMarkers(ViewModel.Transporters);
+                await UpdateMapMarkers(ViewModel.Transporters, fitView: true);
             }
         }
     }
 
-    private async Task UpdateMapMarkers(IEnumerable<PositionVm> transporters)
+    private async Task UpdateMapMarkers(IEnumerable<PositionVm> transporters, bool fitView)
     {
         if (!mapInitialized) return;
 
         try
         {
             var jsPositions = transporters.Select(MapPositionToJs).ToArray();
-            await JS.InvokeVoidAsync("trackHubMap.updateMarkers", (object)jsPositions);
+            await JS.InvokeVoidAsync("trackHubMap.updateMarkers", (object)jsPositions, fitView);
         }
         catch
         {
@@ -129,7 +143,13 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(TransporterIdParam))
             {
-                await UpdateMapMarkers(message.Value);
+                // Keep the user's pan/zoom on periodic refreshes
+                await UpdateMapMarkers(message.Value, fitView: false);
+            }
+            else if (mapInitialized && Guid.TryParse(TransporterIdParam, out var tid))
+            {
+                // Single-unit focus keeps tracking the unit as it moves
+                await FocusOnSingleUnit(tid, preserveView: true);
             }
         });
     }

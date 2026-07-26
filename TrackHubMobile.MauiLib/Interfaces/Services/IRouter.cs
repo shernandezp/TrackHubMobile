@@ -19,7 +19,7 @@ namespace TrackHubMobile.Interfaces.Services;
 
 public interface IRouter
 {
-    Task<IEnumerable<PositionVm>> GetDevicePositionsByUserAsync(CancellationToken cancellationToken);
+    Task<GraphQLResult<IEnumerable<PositionVm>>> GetDevicePositionsByUserAsync(CancellationToken cancellationToken);
     Task<PositionVm> GetDeviceAsync(Guid transporterId, CancellationToken cancellationToken);
     Task<GraphQLResult<IEnumerable<TripVm>>> GetTripsByTransporterAsync(Guid transporterId, DateTimeOffset from, DateTimeOffset to, string? source, CancellationToken cancellationToken);
     Task<GraphQLResult<IEnumerable<PositionVm>>> GetPositionsByTransporterAsync(Guid transporterId, DateTimeOffset from, DateTimeOffset to, string? source, CancellationToken cancellationToken);

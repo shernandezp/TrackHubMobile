@@ -9,6 +9,10 @@
             <i class="fas fa-arrow-left"></i> @LRM["Back"]
         </button>
         <h2>@LRM["TransporterDetails"]</h2>
+        <button class="btn btn-sm btn-outline-secondary refresh-btn" @onclick="RefreshAsync"
+                disabled="@ViewModel.IsRefreshing" title="@LRM["Refresh"]">
+            <i class="fas fa-sync-alt @(ViewModel.IsRefreshing ? "fa-spin" : "")"></i>
+        </button>
     </div>
 
     @if (ViewModel.IsRefreshing || ViewModel.Transporter is null)

@@ -10,7 +10,7 @@ TrackHub Mobile es la aplicación .NET MAUI para conductores y operadores.
 
 ## Descripción general
 
-La aplicación se autentica contra el AuthorityServer de TrackHub usando el Authorization Code Flow con PKCE, y consume las API de Management, Router y Trip Management.
+La aplicación se autentica contra el AuthorityServer de TrackHub usando el Authorization Code Flow con PKCE, y consume las API GraphQL de Manager y Router.
 
 Hay dos clientes OAuth relevantes:
 

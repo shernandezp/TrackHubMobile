@@ -3,11 +3,30 @@ window.trackHubMap = {
     clusterGroup: null,
     markers: {},
     trackLayer: null,
+    hasFittedView: false,
+    openPopupId: null,
+    labels: {
+        moving: 'In Movement',
+        stopped: 'Stopped',
+        offline: 'Offline',
+        justNow: 'Just now',
+        minutesAgo: '{0} min ago',
+        hoursAgo: '{0} h ago',
+        daysAgo: '{0} d ago',
+        accOn: 'ON',
+        accOff: 'OFF'
+    },
 
-    initMap: function (positions) {
+    initMap: function (positions, labels) {
         if (this.map) {
             this.destroyMap();
         }
+
+        if (labels) {
+            this.labels = Object.assign({}, this.labels, labels);
+        }
+        this.hasFittedView = false;
+        this.openPopupId = null;
 
         this.map = L.map('map', {
             zoomControl: false,
@@ -53,13 +72,31 @@ window.trackHubMap = {
         });
         this.map.addLayer(this.clusterGroup);
 
+        // Track which unit's popup is open so it survives marker rebuilds
+        var self = this;
+        this.map.on('popupopen', function (e) {
+            if (e.popup._source && e.popup._source.options.transporterId) {
+                self.openPopupId = e.popup._source.options.transporterId;
+            }
+        });
+        this.map.on('popupclose', function (e) {
+            if (e.popup._source && e.popup._source.options.transporterId === self.openPopupId) {
+                self.openPopupId = null;
+            }
+        });
+
         if (positions && positions.length > 0) {
-            this.updateMarkers(positions);
+            this.updateMarkers(positions, true);
         }
     },
 
-    updateMarkers: function (positions) {
+    // Rebuilds the markers. The view is fitted to the fleet only on the first
+    // load (or when fitView is true); periodic refreshes keep the user's
+    // pan/zoom and reopen the popup that was open before the rebuild.
+    updateMarkers: function (positions, fitView) {
         if (!this.map || !this.clusterGroup) return;
+
+        var reopenId = this.openPopupId;
 
         this.clusterGroup.clearLayers();
         this.markers = {};
@@ -75,15 +112,32 @@ window.trackHubMap = {
             bounds.push([p.lat, p.lng]);
         }
 
-        if (bounds.length === 1) {
-            this.map.setView(bounds[0], 15);
-        } else if (bounds.length > 1) {
-            this.map.fitBounds(bounds, { padding: [50, 50] });
+        if (fitView || !this.hasFittedView) {
+            if (bounds.length === 1) {
+                this.map.setView(bounds[0], 15);
+            } else {
+                this.map.fitBounds(bounds, { padding: [50, 50] });
+            }
+            this.hasFittedView = true;
+        }
+
+        if (reopenId && this.markers[reopenId]) {
+            this.openPopupId = reopenId;
+            var m = this.markers[reopenId];
+            // Only reopen when the marker is actually visible (not clustered)
+            var visible = this.clusterGroup.getVisibleParent(m);
+            if (visible === m) {
+                m.openPopup();
+            }
         }
     },
 
-    focusSingleUnit: function (position) {
+    // Shows a single unit. preserveView keeps the current pan/zoom (used by the
+    // periodic refresh); otherwise the map centers on the unit and opens its popup.
+    focusSingleUnit: function (position, preserveView) {
         if (!this.map) return;
+
+        var wasOpen = this.openPopupId === position.transporterId;
 
         this.clusterGroup.clearLayers();
         this.markers = {};
@@ -92,8 +146,13 @@ window.trackHubMap = {
         this.clusterGroup.addLayer(marker);
         this.markers[position.transporterId] = marker;
 
-        this.map.setView([position.lat, position.lng], 16);
-        marker.openPopup();
+        if (!preserveView) {
+            this.map.setView([position.lat, position.lng], 16);
+            this.hasFittedView = true;
+            marker.openPopup();
+        } else if (wasOpen) {
+            marker.openPopup();
+        }
     },
 
     destroyMap: function () {
@@ -107,9 +166,12 @@ window.trackHubMap = {
             this.map = null;
         }
         this.markers = {};
+        this.hasFittedView = false;
+        this.openPopupId = null;
     },
 
     // Draws a track polyline with start/end markers and fits the map to it.
+    // A single point renders as one stop marker.
     // points: [{ lat, lng, speed, dateTime }], options: { color, weight }
     drawTrack: function (points, options) {
         if (!this.map) return;
@@ -126,6 +188,18 @@ window.trackHubMap = {
         var latlngs = [];
         for (var i = 0; i < points.length; i++) {
             latlngs.push([points[i].lat, points[i].lng]);
+        }
+
+        if (latlngs.length === 1) {
+            var stopMarker = L.marker(latlngs[0], {
+                icon: this._trackEndpointIcon('#ef4444')
+            });
+            if (points[0].dateTime) {
+                stopMarker.bindPopup(this._trackEndpointPopup(points[0]));
+            }
+            this.trackLayer.addLayer(stopMarker);
+            this.map.setView(latlngs[0], 16);
+            return;
         }
 
         var polyline = L.polyline(latlngs, {
@@ -154,11 +228,7 @@ window.trackHubMap = {
         this.trackLayer.addLayer(startMarker);
         this.trackLayer.addLayer(endMarker);
 
-        if (latlngs.length === 1) {
-            this.map.setView(latlngs[0], 16);
-        } else {
-            this.map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
-        }
+        this.map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
     },
 
     clearTrack: function () {
@@ -207,14 +277,10 @@ window.trackHubMap = {
         };
         var c = colors[status];
 
-        var arrowSvg = p.speed > 0
-            ? '<svg viewBox="0 0 24 24" width="14" height="14" style="transform:rotate(' + rotation + 'deg)">' +
-              '<path d="M12 2 L18 18 L12 14 L6 18 Z" fill="white" opacity="0.95"/></svg>'
-            : '<circle cx="5" cy="5" r="3.5" fill="white" opacity="0.9" xmlns="http://www.w3.org/2000/svg"/>';
-
-        var innerCircle = '<svg viewBox="0 0 10 10" width="8" height="8">' + arrowSvg.replace(/<svg[^>]*>/, '').replace('</svg>', '') + '</svg>';
+        var innerCircle;
         if (p.speed > 0) {
-            innerCircle = arrowSvg;
+            innerCircle = '<svg viewBox="0 0 24 24" width="14" height="14" style="transform:rotate(' + rotation + 'deg)">' +
+                '<path d="M12 2 L18 18 L12 14 L6 18 Z" fill="white" opacity="0.95"/></svg>';
         } else {
             innerCircle = '<div style="width:7px;height:7px;border-radius:50%;background:white;opacity:0.9;"></div>';
         }
@@ -237,7 +303,7 @@ window.trackHubMap = {
         });
 
         var popup = this._buildPopup(p, status, c.bg);
-        return L.marker([p.lat, p.lng], { icon: icon }).bindPopup(popup, {
+        return L.marker([p.lat, p.lng], { icon: icon, transporterId: p.transporterId }).bindPopup(popup, {
             className: 'th-popup',
             maxWidth: 260,
             minWidth: 180,
@@ -257,13 +323,12 @@ window.trackHubMap = {
 
     _buildPopup: function (p, status, color) {
         var timeDiff = this._getTimeDiff(p.dateTime);
-        var statusLabels = { moving: 'In Movement', stopped: 'Stopped', offline: 'Offline' };
-        var statusLabel = statusLabels[status] || status;
+        var statusLabel = this.labels[status] || status;
 
         var html = '<div class="th-popup-content">';
         html += '<div class="th-popup-header">';
         html += '<div class="th-popup-title">' + this._esc(p.name) + '</div>';
-        html += '<span class="th-popup-badge" style="background:' + color + ';">' + statusLabel + '</span>';
+        html += '<span class="th-popup-badge" style="background:' + color + ';">' + this._esc(statusLabel) + '</span>';
         html += '</div>';
 
         html += '<div class="th-popup-body">';
@@ -279,8 +344,8 @@ window.trackHubMap = {
 
         if (p.ignition !== null && p.ignition !== undefined) {
             var accColor = p.ignition ? '#22c55e' : '#ef4444';
-            var accText = p.ignition ? 'ON' : 'OFF';
-            html += '<div class="th-popup-row"><i class="fas fa-key"></i><span>ACC: <strong style="color:' + accColor + ';">' + accText + '</strong></span></div>';
+            var accText = p.ignition ? this.labels.accOn : this.labels.accOff;
+            html += '<div class="th-popup-row"><i class="fas fa-key"></i><span>ACC: <strong style="color:' + accColor + ';">' + this._esc(accText) + '</strong></span></div>';
         }
 
         html += '</div></div>';
@@ -292,12 +357,12 @@ window.trackHubMap = {
         var dt = new Date(dateTimeStr);
         var diffMs = now - dt;
         var mins = Math.floor(diffMs / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return mins + ' min' + (mins > 1 ? 's' : '') + ' ago';
+        if (mins < 1) return this.labels.justNow;
+        if (mins < 60) return this.labels.minutesAgo.replace('{0}', mins);
         var hrs = Math.floor(mins / 60);
-        if (hrs < 24) return hrs + ' hr' + (hrs > 1 ? 's' : '') + ' ago';
+        if (hrs < 24) return this.labels.hoursAgo.replace('{0}', hrs);
         var days = Math.floor(hrs / 24);
-        return days + ' day' + (days > 1 ? 's' : '') + ' ago';
+        return this.labels.daysAgo.replace('{0}', days);
     },
 
     _esc: function (str) {

@@ -36,4 +36,12 @@ public partial class TransporterDetailPage
     {
         Navigation.NavigateTo("/listview");
     }
+
+    private async Task RefreshAsync()
+    {
+        if (Guid.TryParse(TransporterIdParam, out var transporterId))
+        {
+            await ViewModel.OnTransporterSelected(transporterId);
+        }
+    }
 }

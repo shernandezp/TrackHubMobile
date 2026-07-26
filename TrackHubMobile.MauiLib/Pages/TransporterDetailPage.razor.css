@@ -22,6 +22,10 @@
         color: var(--text-primary, #1a1a2e);
     }
 
+    .detail-header .refresh-btn {
+        margin-left: auto;
+    }
+
 .detail-content {
     display: flex;
     flex-direction: column;

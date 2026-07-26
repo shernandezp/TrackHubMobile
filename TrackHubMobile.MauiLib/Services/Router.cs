@@ -29,8 +29,9 @@ public sealed class Router(IGraphQLReader reader) : IRouter
     /// Retrieves a list of device positions associated with the current user.
     /// </summary>
     /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
-    /// <returns>A collection of <see cref="PositionVm"/> objects representing device positions.</returns>
-    public async Task<IEnumerable<PositionVm>> GetDevicePositionsByUserAsync(CancellationToken cancellationToken)
+    /// <returns>A <see cref="GraphQLResult{T}"/> wrapping the positions, so callers can
+    /// distinguish an empty fleet from a failed read.</returns>
+    public async Task<GraphQLResult<IEnumerable<PositionVm>>> GetDevicePositionsByUserAsync(CancellationToken cancellationToken)
     {
         // GraphQL query to fetch device positions by user
         const string query = @"
@@ -43,12 +44,18 @@ public sealed class Router(IGraphQLReader reader) : IRouter
             deviceDateTime
             longitude
             latitude
+            course
+            address
+            city
+            state
+            attributes {
+              ignition
+            }
           }
         }";
 
         // Execute the query and return the result
-        var response = await reader.ExecuteGraphQLQuery<IEnumerable<PositionVm>>(Constants.RouterUrl, query, "devicePositionsByUser", cancellationToken);
-        return response ?? [];
+        return await reader.ExecuteGraphQLQueryWithErrors<IEnumerable<PositionVm>>(Constants.RouterUrl, query, "devicePositionsByUser", cancellationToken);
     }
 
     /// <summary>

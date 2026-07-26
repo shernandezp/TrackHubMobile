@@ -250,12 +250,22 @@ public class DataRefresh(IRouter router, IManager manager, ILocalizationResource
             await EnsureAccountSettingsAsync(cancellationToken);
 
             var result = await router.GetDevicePositionsByUserAsync(cancellationToken);
+            if (cancellationToken.IsCancellationRequested) return;
 
-            if (!cancellationToken.IsCancellationRequested && result.Any())
+            if (result.HasError && result.Data is null)
             {
-                Transporters = result;
-                WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(Transporters));
+                // Failed read — keep the cached data; only toast when nothing is cached
+                if (!Transporters.Any())
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                        WeakReferenceMessenger.Default.Send(new ToastMessage(localization["Error"], true)));
+                }
+                return;
             }
+
+            // An empty fleet is a valid result and must reach the screens
+            Transporters = result.Data ?? [];
+            WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(Transporters));
         }
         catch (OperationCanceledException)
         {
