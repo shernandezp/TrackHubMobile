@@ -1,0 +1,37 @@
+﻿@page "/about"
+
+@inject AboutViewModel ViewModel
+
+<div class="about-page">
+    <div class="about-header">
+        <i class="fas fa-satellite-dish app-icon"></i>
+        <h1>@ViewModel.AppName</h1>
+    </div>
+
+    <div class="about-card">
+        <div class="about-row">
+            <span class="about-label">@LRM["Version"]</span>
+            <span class="about-value">@ViewModel.Version</span>
+        </div>
+        <div class="about-row">
+            <span class="about-label">@LRM["Build"]</span>
+            <span class="about-value">@ViewModel.Build</span>
+        </div>
+    </div>
+
+    <div class="about-card">
+        <p class="about-description">@LRM["AboutDescription"]</p>
+    </div>
+
+    <div class="about-card">
+        <h3>@LRM["Contact"]</h3>
+        <div class="about-row">
+            <span class="about-label">@LRM["Developer"]</span>
+            <span class="about-value">Sergio Hernandez</span>
+        </div>
+    </div>
+
+    <div class="about-footer">
+        <p>&copy; @DateTimeOffset.Now.Year Sergio Hernandez. @LRM["AllRightsReserved"]</p>
+    </div>
+</div>

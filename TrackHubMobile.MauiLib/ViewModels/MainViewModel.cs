@@ -13,12 +13,15 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Services.Interfaces;
+using TrackHubMobile.Interfaces.Services;
 
 namespace TrackHubMobile.ViewModels;
 
-public partial class MainViewModel(IAuthenticationService authService) : BaseViewModel("Home")
+public partial class MainViewModel(IAuthentication authService) : BaseViewModel("Home")
 {
+    [ObservableProperty]
+    private string startPath = "/";
+
     public async Task InitializeAsync()
     {
         await authService.LoginAsync();

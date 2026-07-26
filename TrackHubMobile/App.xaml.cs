@@ -1,0 +1,63 @@
+// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License").
+//  You may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
+using TrackHubMobile.Helpers;
+using TrackHubMobile.Interfaces.Helpers;
+using TrackHubMobile.Interfaces.Services;
+using TrackHubMobile.Views;
+
+namespace TrackHubMobile;
+
+public partial class App : Application
+{
+    private readonly IServiceProvider _services;
+
+    public App(IServiceProvider services, IToastDisplay toastDisplay)
+    {
+        InitializeComponent();
+        _services = services;
+
+        toastDisplay.Initialize();
+        UserAppTheme = PlatformAppTheme;
+    }
+
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        var window = new Window(_services.GetRequiredService<MainPage>())
+        {
+            Title = "TrackHubMobile"
+        };
+        return window;
+    }
+
+    protected async override void OnResume()
+    {
+        base.OnResume();
+        await SetAppActive(true, true);
+    }
+
+    protected async override void OnSleep()
+    {
+        base.OnSleep();
+        await SetAppActive(false);
+    }
+
+    private static async Task SetAppActive(bool isActive, bool forceRefresh = false)
+    {
+        var userActivityService = ServiceHelper.GetService<IDataRefresh>();
+        await userActivityService?.SetAppActive(isActive, forceRefresh);
+    }
+
+}

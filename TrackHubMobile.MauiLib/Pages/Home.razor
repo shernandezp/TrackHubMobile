@@ -1,7 +1,90 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+@inherits ActiveScreenComponentBase
+@inject HomeViewModel ViewModel
+@inject ITransporterHelper transporterHelper
 
-Welcome to your new app.
+<div class="dashboard-page">
+    <h1 class="page-title">@LRM["Dashboard"]</h1>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    <div class="hero-card" @onclick="NavigateToMapView">
+        <div class="hero-left">
+            <span class="hero-value">@ViewModel.Total</span>
+            <span class="hero-label">@LRM["TotalUnits"]</span>
+        </div>
+        <div class="hero-right">
+            <i class="fas fa-satellite-dish hero-icon"></i>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card moving" @onclick="NavigateToListView">
+            <div class="stat-icon-wrap">
+                <i class="fas fa-route"></i>
+            </div>
+            <span class="stat-value">@ViewModel.InMovement</span>
+            <span class="stat-label">@LRM["InMovement"]</span>
+        </div>
+        <div class="stat-card stopped" @onclick="NavigateToListView">
+            <div class="stat-icon-wrap">
+                <i class="fas fa-parking"></i>
+            </div>
+            <span class="stat-value">@ViewModel.Stopped</span>
+            <span class="stat-label">@LRM["Stopped"]</span>
+        </div>
+        <div class="stat-card offline" @onclick="NavigateToListView">
+            <div class="stat-icon-wrap">
+                <i class="fas fa-wifi-slash fa-signal"></i>
+            </div>
+            <span class="stat-value">@ViewModel.Offline</span>
+            <span class="stat-label">@LRM["Offline"]</span>
+        </div>
+        <div class="stat-card speeding" @onclick="NavigateToListView">
+            <div class="stat-icon-wrap">
+                <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <span class="stat-value">@ViewModel.Speeding</span>
+            <span class="stat-label">@LRM["Speeding"]</span>
+        </div>
+    </div>
+
+    <div class="metrics-row">
+        <div class="metric-card">
+            <div class="metric-icon ignition-icon">
+                <i class="fas fa-key"></i>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value">@ViewModel.IgnitionOn</span>
+                <span class="metric-label">@LRM["IgnitionOn"]</span>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon speed-icon">
+                <i class="fas fa-gauge-high"></i>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value">@ViewModel.AverageSpeed <small>km/h</small></span>
+                <span class="metric-label">@LRM["AvgSpeed"]</span>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewModel.LastGlobalUpdate.HasValue)
+    {
+        <div class="last-update-bar">
+            <i class="fas fa-clock"></i>
+            <span>@LRM["LastGlobalUpdate"]: @transporterHelper.GetTimeDifference(ViewModel.LastGlobalUpdate.Value)</span>
+        </div>
+    }
+
+    <div class="nav-buttons">
+        <button class="btn btn-nav" @onclick="NavigateToListView">
+            <i class="fas fa-list-ul"></i>
+            <span>@LRM["ListView"]</span>
+        </button>
+        <button class="btn btn-nav" @onclick="NavigateToMapView">
+            <i class="fas fa-map-marked-alt"></i>
+            <span>@LRM["MapView"]</span>
+        </button>
+    </div>
+</div>

@@ -1,8 +1,10 @@
-﻿@inject TrackHubMobile.Interfaces.ILocalizationResourceManager LRM
+﻿@using TrackHubMobile.Interfaces.Helpers
 
 <div class="top-row ps-3 navbar navbar-dark">
 	<div class="container-fluid">
-		<a class="navbar-brand" href="">TrackHubMobile</a>
+		<a class="navbar-brand" href="">
+			<i class="fas fa-satellite-dish me-1"></i> TrackHub
+		</a>
 		<button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
 			<span class="navbar-toggler-icon"></span>
 		</button>
@@ -13,22 +15,27 @@
 	<nav class="flex-column">
 		<div class="nav-item px-3">
 			<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-				<span class="oi oi-home" aria-hidden="true"></span> Home
+				<i class="fas fa-chart-pie nav-icon"></i> @LRM["Home"]
 			</NavLink>
 		</div>
 		<div class="nav-item px-3">
-			<NavLink class="nav-link" href="counter">
-				<span class="oi oi-plus" aria-hidden="true"></span> Counter
+			<NavLink class="nav-link" href="mapview">
+				<i class="fas fa-map-marked-alt nav-icon"></i> @LRM["MapView"]
 			</NavLink>
 		</div>
 		<div class="nav-item px-3">
-			<NavLink class="nav-link" href="weather">
-				<span class="oi oi-list-rich" aria-hidden="true"></span> Weather
+			<NavLink class="nav-link" href="listview">
+				<i class="fas fa-list-ul nav-icon"></i> @LRM["ListView"]
+			</NavLink>
+		</div>
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="about">
+				<i class="fas fa-info-circle nav-icon"></i> @LRM["About"]
 			</NavLink>
 		</div>
 		<div class="nav-item px-3">
 			<button class="nav-link btn btn-link" @onclick="ViewModel.HandleLogout">
-				<span class="oi oi-account-logout" aria-hidden="true"></span> @LRM["Logout"]
+				<i class="fas fa-sign-out-alt nav-icon"></i> @LRM["Logout"]
 			</button>
 		</div>
 	</nav>

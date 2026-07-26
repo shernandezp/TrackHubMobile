@@ -117,7 +117,223 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AccOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="AccOn" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="AccStatus" xml:space="preserve">
+    <value>Acc Status</value>
+  </data>
+  <data name="AccUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>day</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Hour" xml:space="preserve">
+    <value>hour</value>
+  </data>
+  <data name="JustNow" xml:space="preserve">
+    <value>Just Now</value>
+  </data>
+  <data name="LastReport" xml:space="preserve">
+    <value>Last Report</value>
+  </data>
+  <data name="LastUpdate" xml:space="preserve">
+    <value>Last Update</value>
+  </data>
+  <data name="ListView" xml:space="preserve">
+    <value>List View</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading</value>
+  </data>
   <data name="Logout" xml:space="preserve">
     <value>Logout</value>
+  </data>
+  <data name="MapView" xml:space="preserve">
+    <value>Map View</value>
+  </data>
+  <data name="Minute" xml:space="preserve">
+    <value>minute</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Odometer" xml:space="preserve">
+    <value>Odometer</value>
+  </data>
+  <data name="Speed" xml:space="preserve">
+    <value>Speed</value>
+  </data>
+  <data name="State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="Temperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="TransporterDetails" xml:space="preserve">
+    <value>Transporter Details</value>
+  </data>
+  <data name="Transporters" xml:space="preserve">
+    <value>Units</value>
+  </data>
+  <data name="SearchUnits" xml:space="preserve">
+    <value>Search units</value>
+  </data>
+  <data name="NoUnitsFound" xml:space="preserve">
+    <value>No units found</value>
+  </data>
+  <data name="OpenInGoogleMaps" xml:space="preserve">
+    <value>Google Maps</value>
+  </data>
+  <data name="ShowOnMap" xml:space="preserve">
+    <value>Show on Map</value>
+  </data>
+  <data name="ShareLocation" xml:space="preserve">
+    <value>Share</value>
+  </data>
+  <data name="ViewDetails" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="TransporterType" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Coordinates" xml:space="preserve">
+    <value>Coordinates</value>
+  </data>
+  <data name="Altitude" xml:space="preserve">
+    <value>Altitude</value>
+  </data>
+  <data name="Country" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="Attributes" xml:space="preserve">
+    <value>Attributes</value>
+  </data>
+  <data name="Satellites" xml:space="preserve">
+    <value>Satellites</value>
+  </data>
+  <data name="Hourmeter" xml:space="preserve">
+    <value>Hourmeter</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="TotalUnits" xml:space="preserve">
+    <value>Total Units</value>
+  </data>
+  <data name="InMovement" xml:space="preserve">
+    <value>In Movement</value>
+  </data>
+  <data name="Stopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="Offline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="Speeding" xml:space="preserve">
+    <value>Speeding</value>
+  </data>
+  <data name="IgnitionOn" xml:space="preserve">
+    <value>Ignition On</value>
+  </data>
+  <data name="AvgSpeed" xml:space="preserve">
+    <value>Avg. Speed</value>
+  </data>
+  <data name="LastGlobalUpdate" xml:space="preserve">
+    <value>Last Update</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="Build" xml:space="preserve">
+    <value>Build</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>TrackHub Mobile lets you monitor your fleet in real time. View unit locations, status, and details from anywhere.</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>Contact</value>
+  </data>
+  <data name="Developer" xml:space="preserve">
+    <value>Developer</value>
+  </data>
+  <data name="AllRightsReserved" xml:space="preserve">
+    <value>All rights reserved.</value>
+  </data>
+  <data name="PositionHistory" xml:space="preserve">
+    <value>Position History</value>
+  </data>
+  <data name="HistorySource" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="SourceProvider" xml:space="preserve">
+    <value>GPS provider</value>
+  </data>
+  <data name="SourceTrackHub" xml:space="preserve">
+    <value>TrackHub</value>
+  </data>
+  <data name="FromDate" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="ToDate" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Trips" xml:space="preserve">
+    <value>Trips</value>
+  </data>
+  <data name="Distance" xml:space="preserve">
+    <value>Distance</value>
+  </data>
+  <data name="Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="AverageSpeed" xml:space="preserve">
+    <value>Average Speed</value>
+  </data>
+  <data name="MovingTrip" xml:space="preserve">
+    <value>In transit</value>
+  </data>
+  <data name="StoppedTrip" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="NoTripsFound" xml:space="preserve">
+    <value>No trips found for the selected range.</value>
+  </data>
+  <data name="FeatureDisabledHistory" xml:space="preserve">
+    <value>Stored history is not enabled for this account</value>
+  </data>
+  <data name="MaxRangeExceeded" xml:space="preserve">
+    <value>The date range is invalid or exceeds 31 days.</value>
+  </data>
+  <data name="HistoryError" xml:space="preserve">
+    <value>Could not load the position history. Check your connection and try again.</value>
+  </data>
+  <data name="History" xml:space="preserve">
+    <value>History</value>
   </data>
 </root>

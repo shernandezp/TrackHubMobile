@@ -1,0 +1,109 @@
+@page "/transporter/{TransporterIdParam}/history"
+
+<div class="detail-page history-page">
+    <div class="detail-header">
+        <button class="btn btn-sm btn-outline-secondary" @onclick="GoBack">
+            <i class="fas fa-arrow-left"></i> @LRM["Back"]
+        </button>
+        <h2>@LRM["PositionHistory"]</h2>
+    </div>
+
+    <div class="detail-card">
+        <div class="filter-row">
+            <label class="detail-label" for="history-from">@LRM["FromDate"]</label>
+            <input id="history-from" class="form-control form-control-sm filter-input" type="datetime-local"
+                   @bind="FromDate" @bind:format="yyyy-MM-ddTHH:mm" />
+        </div>
+        <div class="filter-row">
+            <label class="detail-label" for="history-to">@LRM["ToDate"]</label>
+            <input id="history-to" class="form-control form-control-sm filter-input" type="datetime-local"
+                   @bind="ToDate" @bind:format="yyyy-MM-ddTHH:mm" />
+        </div>
+
+        @if (hasStoredHistoryFeature)
+        {
+            <div class="filter-row">
+                <span class="detail-label">@LRM["HistorySource"]</span>
+                <div class="source-switch">
+                    <button class="btn btn-sm @(useStoredSource ? "btn-primary" : "btn-outline-primary")"
+                            @onclick="() => SetSource(true)">
+                        @LRM["SourceTrackHub"]
+                    </button>
+                    <button class="btn btn-sm @(!useStoredSource ? "btn-primary" : "btn-outline-primary")"
+                            @onclick="() => SetSource(false)">
+                        @LRM["SourceProvider"]
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (showRangeError)
+        {
+            <div class="alert alert-warning history-banner">@LRM["MaxRangeExceeded"]</div>
+        }
+
+        <button class="btn btn-sm btn-primary search-btn" @onclick="SearchAsync" disabled="@isLoading">
+            <i class="fas fa-search"></i> @LRM["Search"]
+        </button>
+    </div>
+
+    @if (featureDisabled)
+    {
+        <div class="alert alert-warning history-banner">
+            <i class="fas fa-lock"></i> @LRM["FeatureDisabledHistory"]
+        </div>
+    }
+    else if (hasError)
+    {
+        <div class="alert alert-danger history-banner">
+            <i class="fas fa-exclamation-triangle"></i> @LRM["HistoryError"]
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <em>@LRM["Loading"]...</em>
+        </div>
+    }
+    else if (hasSearched && !featureDisabled && !hasError)
+    {
+        <div class="detail-card trips-card">
+            <h3>@LRM["Trips"]</h3>
+            @if (trips.Count == 0)
+            {
+                <p class="no-trips">@LRM["NoTripsFound"]</p>
+            }
+            else
+            {
+                @foreach (var trip in trips)
+                {
+                    var current = trip;
+                    var isMoving = IsMoving(current);
+                    <div class="trip-card @(current.TripId == selectedTripId ? "selected" : "") @(isMoving ? "moving" : "stopped")"
+                         @onclick="() => SelectTripAsync(current)">
+                        <div class="trip-icon">
+                            <i class="fas @(isMoving ? "fa-route" : "fa-parking")"></i>
+                        </div>
+                        <div class="trip-body">
+                            <div class="trip-title">@(isMoving ? LRM["MovingTrip"] : LRM["StoppedTrip"])</div>
+                            <div class="trip-times">
+                                @current.From.LocalDateTime.ToString("g") - @current.To.LocalDateTime.ToString("g")
+                            </div>
+                            <div class="trip-stats">
+                                @if (isMoving)
+                                {
+                                    <span>@LRM["Distance"]: @current.TotalDistance.ToString("N2") km</span>
+                                    <span>@LRM["AverageSpeed"]: @current.AverageSpeed.ToString("N1") km/h</span>
+                                }
+                                <span>@LRM["Duration"]: @FormatDuration(current)</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+
+    <div id="map" class="history-map"></div>
+</div>

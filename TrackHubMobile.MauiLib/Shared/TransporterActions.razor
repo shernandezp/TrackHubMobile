@@ -1,0 +1,22 @@
+﻿@inject ITransporterHelper transporterHelper
+
+<div class="action-buttons">
+    <button class="btn btn-sm btn-outline-primary" @onclick="OpenInGoogleMaps" title="@LRM["OpenInGoogleMaps"]">
+        <i class="fas fa-map-marker-alt"></i> @LRM["OpenInGoogleMaps"]
+    </button>
+    <button class="btn btn-sm btn-outline-secondary" @onclick="ShowOnMap" title="@LRM["ShowOnMap"]">
+        <i class="fas fa-map"></i> @LRM["ShowOnMap"]
+    </button>
+    <button class="btn btn-sm btn-outline-success" @onclick="ShareViaWhatsApp" title="@LRM["ShareLocation"]">
+        <i class="fab fa-whatsapp"></i> @LRM["ShareLocation"]
+    </button>
+    <button class="btn btn-sm btn-outline-primary" @onclick="ViewHistory" title="@LRM["History"]">
+        <i class="fas fa-history"></i> @LRM["History"]
+    </button>
+    @if (ShowDetailsButton)
+    {
+        <button class="btn btn-sm btn-outline-info" @onclick="ViewDetails" title="@LRM["ViewDetails"]">
+            <i class="fas fa-info-circle"></i> @LRM["ViewDetails"]
+        </button>
+    }
+</div>

@@ -1,11 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <Project Sdk="Microsoft.NET.Sdk.Razor">
     <PropertyGroup>
-      <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
-      <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>
-      <!-- <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-tizen</TargetFrameworks> -->
-      <TargetFrameworks>net9.0-ios;net9.0-maccatalyst;net9.0;net9.0-android35.0</TargetFrameworks>
-      <OutputType Condition="'$(TargetFramework)' != 'net9.0'">Exe</OutputType>
+      <TargetFrameworks>net10.0-ios;net10.0-android;net10.0-maccatalyst</TargetFrameworks>
+      <OutputType>Exe</OutputType>
 
         <!-- .NET MAUI -->
         <UseMaui>true</UseMaui>
@@ -18,13 +14,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>TrackHubMobile</RootNamespace>
         <WindowsPackageType>None</WindowsPackageType>
-        <!--<WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>-->
 
         <!-- Display name -->
         <ApplicationTitle>TrackHubMobile</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.c2ls.trackhubmobile</ApplicationId>
+        <ApplicationId>com.trackhubmobile</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -34,13 +29,7 @@
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
-
-        <!-- Minimum Target OS Version for Windows Platform -->
-        <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     </PropertyGroup>
-
     <ItemGroup>
         <!-- App Icon -->
         <MauiIcon Include="Resources\appicon.svg" ForegroundFile="Resources\appiconfg.svg" Color="#512BD4" />
@@ -57,7 +46,10 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" />
+        <PackageReference Include="Microsoft.Extensions.Http" />
         <PackageReference Include="Microsoft.Maui.Controls" />
+        <PackageReference Include="CommunityToolkit.Maui" />
+        <PackageReference Include="CommunityToolkit.Mvvm" />
     </ItemGroup>
 
     <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
@@ -70,5 +62,20 @@
 
     <ItemGroup>
         <ProjectReference Include="..\TrackHubMobile.MauiLib\TrackHubMobile.MauiLib.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <MauiXaml Update="App.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
+      <MauiXaml Update="Resources\Colors.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
+      <MauiXaml Update="Resources\Styles.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
+      <MauiXaml Update="Views\MainPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
     </ItemGroup>
 </Project>

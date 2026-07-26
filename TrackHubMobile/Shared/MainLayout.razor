@@ -1,0 +1,61 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject IAppInfo appInfo
+@using CommunityToolkit.Mvvm.Messaging
+@using TrackHubMobile.Messages
+
+@if (_suspended)
+{
+	<div class="page">
+		<main>
+			<article class="content px-4" style="text-align:center; padding-top:3rem;">
+				<h2>Account Not Available</h2>
+				<p>This account is not currently operational. Please contact support for assistance.</p>
+			</article>
+		</main>
+	</div>
+}
+else
+{
+	<div class="page">
+
+		<div class="sidebar">
+			<NavMenu />
+		</div>
+
+		<main>
+			<article class="content px-4">
+				@Body
+			</article>
+		</main>
+	</div>
+}
+
+@code {
+	private string? divStyle;
+	private bool _suspended;
+
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+
+		divStyle = appInfo.RequestedTheme switch
+		{
+			AppTheme.Dark => "background-color: #1f1f1f;",
+			_ => "background-color: #f7f7f7;"
+		};
+
+		// Render a suspension state and block operational navigation when the account is non-operational.
+		WeakReferenceMessenger.Default.Register<AccountSuspendedMessage>(this, (r, m) =>
+		{
+			_suspended = m.Value;
+			InvokeAsync(StateHasChanged);
+		});
+	}
+
+	public void Dispose()
+	{
+		WeakReferenceMessenger.Default.Unregister<AccountSuspendedMessage>(this);
+	}
+}

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Packages.props" />
+    <File Path="README.en.md" />
+    <File Path="README.es.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="TrackHubMobile.MauiLib/TrackHubMobile.MauiLib.csproj" />
+  <Project Path="TrackHubMobile/TrackHubMobile.csproj">
+    <Deploy />
+  </Project>
+</Solution>

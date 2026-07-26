@@ -2,7 +2,7 @@
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using TrackHubMobile.Services.Interfaces;
+using TrackHubMobile.Interfaces.Services;
 
 namespace TrackHubMobile;
 
@@ -24,7 +24,7 @@ public class LogoutCallbackActivity : Activity
         {
             MainThread.BeginInvokeOnMainThread(async () =>
             {
-                var authService = IPlatformApplication.Current?.Services.GetService<IAuthenticationService>();
+                var authService = IPlatformApplication.Current?.Services.GetService<IAuthentication>();
                 if (authService != null)
                 {
                     await authService.LoginAsync();

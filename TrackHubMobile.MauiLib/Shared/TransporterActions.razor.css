@@ -1,0 +1,25 @@
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+    .action-buttons .btn {
+        font-size: 0.78rem;
+        font-weight: 500;
+        padding: 0.35rem 0.65rem;
+        border-radius: var(--radius-sm, 8px);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all var(--transition-fast, 0.15s ease);
+    }
+
+    .action-buttons .btn:active {
+        transform: scale(0.96);
+    }
+
+    .action-buttons .btn i {
+        font-size: 0.85rem;
+    }

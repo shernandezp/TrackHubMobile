@@ -13,11 +13,11 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Services.Interfaces;
+using TrackHubMobile.Interfaces.Services;
 
 namespace TrackHubMobile.ViewModels;
 
-public class NavMenuViewModel(IAuthenticationService authService)
+public class NavMenuViewModel(IAuthentication authService)
 {
     public async Task HandleLogout()
     {

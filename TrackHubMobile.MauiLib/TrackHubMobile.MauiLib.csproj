@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.Razor">
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
 
         <!-- .NET MAUI -->
         <UseMaui>true</UseMaui>
@@ -12,20 +11,17 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>TrackHubMobile</RootNamespace>
+        
+        <!-- This is a Razor class library, not a hosting project -->
+        <GenerateStaticWebAssetsManifest>false</GenerateStaticWebAssetsManifest>
+        <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     </PropertyGroup>
-
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
         <PackageReference Include="Microsoft.Extensions.Http" />
         <PackageReference Include="Microsoft.Maui.Controls" />
-        <PackageReference Include="Microsoft.Maui.Controls.Maps" />
-        <PackageReference Include="CommunityToolkit.Maui.Maps" />
         <PackageReference Include="CommunityToolkit.Maui" />
         <PackageReference Include="CommunityToolkit.Mvvm" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Helpers\" />
     </ItemGroup>
 
     <ItemGroup>
@@ -41,5 +37,9 @@
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>AppResources.Designer.cs</LastGenOutput>
       </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Views\" />
     </ItemGroup>
 </Project>

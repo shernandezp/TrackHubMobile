@@ -1,0 +1,64 @@
+﻿@page "/listview"
+
+@inherits ActiveScreenComponentBase
+@inject TransporterListViewModel ViewModel
+@inject ITransporterHelper transporterHelper
+
+<div class="list-page">
+    <div class="list-header">
+        <h1>@LRM["Transporters"]</h1>
+        <div class="search-box">
+            <input type="text"
+                   class="form-control form-control-sm"
+                   placeholder="@LRM["SearchUnits"]..."
+                   value="@ViewModel.SearchText"
+                   @oninput="OnSearchInput" />
+        </div>
+    </div>
+
+    @if (ViewModel.Transporters is null)
+    {
+        <div class="loading-state">
+            <em>@LRM["Loading"]...</em>
+        </div>
+    }
+    else if (ViewModel.FilteredTransporters?.Any() != true)
+    {
+        <div class="empty-state">
+            <p>@LRM["NoUnitsFound"]</p>
+        </div>
+    }
+    else
+    {
+        <div class="unit-list">
+            @foreach (var item in ViewModel.FilteredTransporters!)
+            {
+                var isSelected = ViewModel.SelectedTransporter?.TransporterId == item.TransporterId;
+                <div class="unit-card @(isSelected ? "expanded" : "")" @onclick="() => ViewModel.OnRowClick(item)">
+                    <div class="unit-summary">
+                        <div class="unit-status @GetStatusClass(item)"></div>
+                        <div class="unit-info">
+                            <span class="unit-name">@item.DeviceName</span>
+                            <span class="unit-type">@item.TransporterType</span>
+                        </div>
+                        <div class="unit-meta">
+                            <span class="unit-speed">@item.Speed km/h</span>
+                            <span class="unit-time">@transporterHelper.GetTimeDifference(item.DeviceDateTime)</span>
+                        </div>
+                        <div class="expand-icon">
+                            <i class="fas fa-chevron-@(isSelected ? "up" : "down")"></i>
+                        </div>
+                    </div>
+
+                    @if (isSelected)
+                    {
+                        <div class="unit-expanded" @onclick:stopPropagation="true">
+                            <TransporterDetail TransporterId="item.TransporterId" />
+                            <TransporterActions Transporter="item" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

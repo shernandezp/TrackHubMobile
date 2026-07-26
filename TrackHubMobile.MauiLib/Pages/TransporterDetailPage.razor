@@ -1,0 +1,135 @@
+﻿@page "/transporter/{TransporterIdParam}"
+
+@inject TransporterDetailViewModel ViewModel
+@inject ITransporterHelper transporterHelper
+
+<div class="detail-page">
+    <div class="detail-header">
+        <button class="btn btn-sm btn-outline-secondary" @onclick="GoBack">
+            <i class="fas fa-arrow-left"></i> @LRM["Back"]
+        </button>
+        <h2>@LRM["TransporterDetails"]</h2>
+    </div>
+
+    @if (ViewModel.IsRefreshing || ViewModel.Transporter is null)
+    {
+        <div class="loading-state">
+            <em>@LRM["Loading"]...</em>
+        </div>
+    }
+    else
+    {
+        var unit = ViewModel.Transporter.Value;
+        <div class="detail-content">
+            <div class="detail-card">
+                <div class="detail-row">
+                    <span class="detail-label">@LRM["Name"]</span>
+                    <span class="detail-value">@unit.DeviceName</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">@LRM["TransporterType"]</span>
+                    <span class="detail-value">@unit.TransporterType</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">@LRM["LastReport"]</span>
+                    <span class="detail-value">@unit.DeviceDateTime.ToLocalTime().ToString("g")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">@LRM["LastUpdate"]</span>
+                    <span class="detail-value">@transporterHelper.GetTimeDifference(unit.DeviceDateTime)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">@LRM["Speed"]</span>
+                    <span class="detail-value">@unit.Speed km/h</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">@LRM["Coordinates"]</span>
+                    <span class="detail-value">@unit.Latitude.ToString("F6"), @unit.Longitude.ToString("F6")</span>
+                </div>
+                @if (unit.Altitude.HasValue)
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">@LRM["Altitude"]</span>
+                        <span class="detail-value">@unit.Altitude.Value.ToString("F1") m</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(unit.Address))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">@LRM["Address"]</span>
+                        <span class="detail-value">@unit.Address</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(unit.City))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">@LRM["City"]</span>
+                        <span class="detail-value">@unit.City</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(unit.State))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">@LRM["State"]</span>
+                        <span class="detail-value">@unit.State</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(unit.Country))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">@LRM["Country"]</span>
+                        <span class="detail-value">@unit.Country</span>
+                    </div>
+                }
+            </div>
+
+            @if (unit.Attributes is not null)
+            {
+                <div class="detail-card">
+                    <h3>@LRM["Attributes"]</h3>
+                    @if (unit.Attributes.Value.Ignition is not null)
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">@LRM["AccStatus"]</span>
+                            <span class="detail-value acc-@(unit.Attributes.Value.Ignition == true ? "on" : "off")">
+                                @transporterHelper.GetAccStatus(unit.Attributes.Value.Ignition)
+                            </span>
+                        </div>
+                    }
+                    @if (unit.Attributes.Value.Mileage is not null)
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">@LRM["Odometer"]</span>
+                            <span class="detail-value">@unit.Attributes.Value.Mileage.Value.ToString("N1") km</span>
+                        </div>
+                    }
+                    @if (unit.Attributes.Value.Temperature is not null)
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">@LRM["Temperature"]</span>
+                            <span class="detail-value">@unit.Attributes.Value.Temperature.Value.ToString("F1")°C</span>
+                        </div>
+                    }
+                    @if (unit.Attributes.Value.Satellites is not null)
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">@LRM["Satellites"]</span>
+                            <span class="detail-value">@unit.Attributes.Value.Satellites</span>
+                        </div>
+                    }
+                    @if (unit.Attributes.Value.Hourmeter is not null)
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">@LRM["Hourmeter"]</span>
+                            <span class="detail-value">@unit.Attributes.Value.Hourmeter.Value.ToString("N1") h</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="detail-actions">
+                <TransporterActions Transporter="unit" ShowDetailsButton="false" />
+            </div>
+        </div>
+    }
+</div>
