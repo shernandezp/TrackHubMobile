@@ -24,7 +24,15 @@ public readonly record struct GraphQLResult<T>(
     string? ErrorCode,
     string? ErrorMessage)
 {
+    /// <summary>
+    /// Error code used when the query was never sent because no access token was available.
+    /// </summary>
+    public const string UnauthenticatedCode = "UNAUTHENTICATED";
+
     public bool HasError => ErrorCode is not null || ErrorMessage is not null;
+
+    public bool IsUnauthenticated =>
+        string.Equals(ErrorCode, UnauthenticatedCode, StringComparison.Ordinal);
 
     public bool IsFeatureDisabled =>
         (ErrorCode?.Contains("FEATURE_DISABLED", StringComparison.OrdinalIgnoreCase) ?? false) ||

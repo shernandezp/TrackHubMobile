@@ -20,7 +20,11 @@ using TrackHubMobile.Models;
 
 namespace TrackHubMobile.Services;
 
-public class DataRefresh(IRouter router, IManager manager, ILocalizationResourceManager localization) : IAsyncDisposable, IDataRefresh
+public class DataRefresh(
+    IRouter router,
+    IManager manager,
+    IAuthentication authentication,
+    ILocalizationResourceManager localization) : IAsyncDisposable, IDataRefresh
 {
     private static readonly TimeSpan DefaultRefreshInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan MinRefreshInterval = TimeSpan.FromSeconds(10);
@@ -244,6 +248,10 @@ public class DataRefresh(IRouter router, IManager manager, ILocalizationResource
         {
             if (cancellationToken.IsCancellationRequested) return;
 
+            // Nothing to read until the user is signed in. Staying silent here keeps the
+            // once-per-session settings/status reads for the first authenticated tick.
+            if (!await authentication.IsAuthenticatedAsync()) return;
+
             // Block operational queries when the account is non-operational.
             if (!await EnsureAccountOperationalAsync(cancellationToken)) return;
 
@@ -251,6 +259,9 @@ public class DataRefresh(IRouter router, IManager manager, ILocalizationResource
 
             var result = await router.GetDevicePositionsByUserAsync(cancellationToken);
             if (cancellationToken.IsCancellationRequested) return;
+
+            // The session lapsed while the query was in flight — the sign-in prompt handles it
+            if (result.IsUnauthenticated) return;
 
             if (result.HasError && result.Data is null)
             {

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Splash artwork: the TrackHub mark on the same radar dial as the launcher icon, with a
+     sweep and a few tracked units so the screen is not a lone glyph on a flat field.
+
+     The canvas is deliberately transparent and the glow fades to nothing: Android 12+ insets
+     this into a 108dp box and paints only its central 72dp over maui_splash_color, so any
+     opaque fill here would show up as a square patch a shade off the window background.
+     Everything is kept inside r=138 for the same reason - that is the widest circle the crop
+     is guaranteed to keep. -->
+<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <radialGradient id="thSplashGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#2a4d85" stop-opacity="0.55" />
+            <stop offset="50%" stop-color="#1b3560" stop-opacity="0.26" />
+            <stop offset="100%" stop-color="#0a1628" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="thSweep" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#4da3ff" stop-opacity="0.20" />
+            <stop offset="100%" stop-color="#4da3ff" stop-opacity="0" />
+        </linearGradient>
+    </defs>
+
+    <!-- Soft glow. The gradient is sized to this circle, so it reaches full transparency at
+         r=140 - inside the crop edge, which is what keeps the patch from showing. -->
+    <circle cx="228" cy="228" r="140" fill="url(#thSplashGlow)" />
+
+    <!-- Antenna sweep -->
+    <path d="M228 228 L360 184 A138 138 0 0 1 360 272 Z" fill="url(#thSweep)" />
+
+    <!-- Range rings -->
+    <g fill="none" stroke="#ffffff" stroke-width="3">
+        <circle cx="228" cy="228" r="58" stroke-opacity="0.16" />
+        <circle cx="228" cy="228" r="98" stroke-opacity="0.13" />
+        <circle cx="228" cy="228" r="138" stroke-opacity="0.10" />
+    </g>
+
+    <!-- Bearing ticks -->
+    <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="4" stroke-linecap="round">
+        <line x1="228" y1="124" x2="228" y2="138" transform="rotate(45 228 228)" />
+        <line x1="228" y1="124" x2="228" y2="138" transform="rotate(135 228 228)" />
+        <line x1="228" y1="124" x2="228" y2="138" transform="rotate(225 228 228)" />
+        <line x1="228" y1="124" x2="228" y2="138" transform="rotate(315 228 228)" />
+    </g>
+
+    <!-- Tracked units, off the axes so they never sit on a spoke or a tick -->
+    <g fill="#1E90FF">
+        <circle cx="325" cy="180" r="7" fill-opacity="0.70" />
+        <circle cx="180" cy="132" r="5" fill-opacity="0.55" />
+        <circle cx="116" cy="268" r="6" fill-opacity="0.60" />
+        <circle cx="276" cy="325" r="5" fill-opacity="0.50" />
+    </g>
+
+    <!-- TrackHub mark, scaled to 38% of the canvas so the 1.5x magnification of the crop
+         lands it at ~58% of the visible area, matching the app icon. -->
+    <g transform="translate(94.67,94.67) scale(1.33333)">
+        <!-- Central Hub -->
+        <circle cx="100" cy="100" r="30" fill="#FFFFFF" />
+
+        <!-- Shortened Spokes -->
+        <line x1="100" y1="70" x2="100" y2="40" stroke="#FFFFFF" stroke-width="4"/>
+        <line x1="130" y1="100" x2="160" y2="100" stroke="#FFFFFF" stroke-width="4"/>
+        <line x1="100" y1="130" x2="100" y2="160" stroke="#FFFFFF" stroke-width="4"/>
+        <line x1="70" y1="100" x2="40" y2="100" stroke="#FFFFFF" stroke-width="4"/>
+
+        <!-- Tracking Symbol -->
+        <circle cx="100" cy="100" r="10" fill="#1E90FF" />
+        <circle cx="100" cy="100" r="5" fill="#FFFFFF" />
+
+        <!-- Connected Dots -->
+        <circle cx="100" cy="40" r="5" fill="#FFFFFF" />
+        <circle cx="160" cy="100" r="5" fill="#FFFFFF" />
+        <circle cx="100" cy="160" r="5" fill="#FFFFFF" />
+        <circle cx="40" cy="100" r="5" fill="#FFFFFF" />
+    </g>
+</svg>

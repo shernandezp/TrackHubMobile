@@ -22,8 +22,6 @@ public partial class MainViewModel(IAuthentication authService) : BaseViewModel(
     [ObservableProperty]
     private string startPath = "/";
 
-    public async Task InitializeAsync()
-    {
-        await authService.LoginAsync();
-    }
+    public async Task<bool> InitializeAsync()
+        => await authService.LoginAsync();
 }

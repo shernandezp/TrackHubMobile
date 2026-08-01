@@ -34,7 +34,6 @@ public static class Constants
     public const string Client = "mobile_client";
     public const string Scope = "mobile_scope";
 
-    public const string CodeVerifier = "code_verifier";
     public const string AccessToken = "access_token";
     public const string RefreshToken = "refresh_token";
 }

@@ -141,6 +141,9 @@
   <data name="Error" xml:space="preserve">
     <value>Something went wrong</value>
   </data>
+  <data name="SignInFailed" xml:space="preserve">
+    <value>Could not sign in. Please try again.</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
   </data>

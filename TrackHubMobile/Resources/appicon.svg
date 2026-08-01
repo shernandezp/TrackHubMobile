@@ -1,4 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Launcher icon background: the app's sidebar navy with a faint radar dial, so the tile
+     is not a flat black square. Everything that must survive Android's adaptive-icon crop
+     stays inside r=150 (the central 66% of the 456 canvas); the outer rings only show on
+     platforms that render the full square. -->
 <svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0" y="0" width="456" height="456" fill="#512BD4" />
+    <defs>
+        <radialGradient id="thGlow" cx="50%" cy="50%" r="62%">
+            <stop offset="0%" stop-color="#16274a" />
+            <stop offset="60%" stop-color="#0d1b32" />
+            <stop offset="100%" stop-color="#0a1628" />
+        </radialGradient>
+    </defs>
+
+    <rect x="0" y="0" width="456" height="456" fill="#0a1628" />
+    <rect x="0" y="0" width="456" height="456" fill="url(#thGlow)" />
+
+    <!-- Range rings -->
+    <g fill="none" stroke="#ffffff" stroke-width="3">
+        <circle cx="228" cy="228" r="62" stroke-opacity="0.16" />
+        <circle cx="228" cy="228" r="104" stroke-opacity="0.13" />
+        <circle cx="228" cy="228" r="146" stroke-opacity="0.10" />
+        <circle cx="228" cy="228" r="196" stroke-opacity="0.06" />
+    </g>
+
+    <!-- Bearing ticks on the outermost always-visible ring -->
+    <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="4" stroke-linecap="round">
+        <line x1="228" y1="132" x2="228" y2="146" transform="rotate(45 228 228)" />
+        <line x1="228" y1="132" x2="228" y2="146" transform="rotate(135 228 228)" />
+        <line x1="228" y1="132" x2="228" y2="146" transform="rotate(225 228 228)" />
+        <line x1="228" y1="132" x2="228" y2="146" transform="rotate(315 228 228)" />
+    </g>
 </svg>

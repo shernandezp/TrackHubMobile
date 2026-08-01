@@ -1,5 +1,4 @@
 ﻿using Foundation;
-using TrackHubMobile.Interfaces.Services;
 using UIKit;
 
 namespace TrackHubMobile;
@@ -17,18 +16,11 @@ public class AppDelegate : MauiUIApplicationDelegate
         if (WebAuthenticator.Default.OpenUrl(uri))
             return true;
 
-        // Then, check for logout callback
+        // Then, check for logout callback. Returning to the app is all that is needed here:
+        // the app lifecycle (App.OnResume, or MainPage on a cold start) owns the decision to
+        // ask for a new sign-in, so there is a single place that opens the browser.
         if (uri.Scheme == Utils.Constants.LogoutScheme && uri.Host == Utils.Constants.LogoutHost)
         {
-            MainThread.BeginInvokeOnMainThread(async () =>
-            {
-                var authService = IPlatformApplication.Current?.Services.GetService<IAuthentication>();
-                if (authService != null)
-                {
-                    await authService.LoginAsync();
-                }
-            });
-
             return true;
         }
 

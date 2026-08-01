@@ -40,10 +40,10 @@ public sealed class GraphQLReader(
         CancellationToken cancellationToken)
     {
         var requestBody = new { query };
-        var token = await storage.GetSecure(Constants.AccessToken);
-        if (!TokenHelper.IsTokenValid(token))
+        var token = await GetTokenAsync();
+        if (token is null)
         {
-            token = await authentication.RefreshAccessTokenAsync();
+            return default;
         }
 
         using var jsonContent = new StringContent(
@@ -97,10 +97,11 @@ public sealed class GraphQLReader(
         CancellationToken cancellationToken)
     {
         var requestBody = new { query };
-        var token = await storage.GetSecure(Constants.AccessToken);
-        if (!TokenHelper.IsTokenValid(token))
+        var token = await GetTokenAsync();
+        if (token is null)
         {
-            token = await authentication.RefreshAccessTokenAsync();
+            // Not signed in yet: report it instead of sending an anonymous request
+            return new GraphQLResult<T>(default, GraphQLResult<T>.UnauthenticatedCode, null);
         }
 
         using var jsonContent = new StringContent(
@@ -158,5 +159,21 @@ public sealed class GraphQLReader(
         }
 
         return new GraphQLResult<T>(data, errorCode, errorMessage);
+    }
+
+    /// <summary>
+    /// Returns a usable access token, attempting a silent refresh first.
+    /// Null means an interactive sign-in is pending, so the query must not be sent.
+    /// </summary>
+    private async Task<string?> GetTokenAsync()
+    {
+        var token = await storage.GetSecure(Constants.AccessToken);
+        if (TokenHelper.IsTokenValid(token))
+        {
+            return token;
+        }
+
+        token = await authentication.RefreshAccessTokenAsync();
+        return string.IsNullOrEmpty(token) ? null : token;
     }
 }

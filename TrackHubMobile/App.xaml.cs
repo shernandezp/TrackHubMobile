@@ -45,19 +45,44 @@ public partial class App : Application
     protected async override void OnResume()
     {
         base.OnResume();
-        await SetAppActive(true, true);
+        try
+        {
+            // Coming back to the foreground is the retry point for a session that
+            // expired or a sign-in the user dismissed
+            var authentication = ServiceHelper.GetService<IAuthentication>();
+            if (authentication is not null)
+            {
+                await authentication.LoginAsync();
+            }
+
+            await SetAppActive(true, true);
+        }
+        catch (Exception)
+        {
+            // Lifecycle callbacks run detached; an error here must not crash the app
+        }
     }
 
     protected async override void OnSleep()
     {
         base.OnSleep();
-        await SetAppActive(false);
+        try
+        {
+            await SetAppActive(false);
+        }
+        catch (Exception)
+        {
+            // See OnResume
+        }
     }
 
     private static async Task SetAppActive(bool isActive, bool forceRefresh = false)
     {
         var userActivityService = ServiceHelper.GetService<IDataRefresh>();
-        await userActivityService?.SetAppActive(isActive, forceRefresh);
+        if (userActivityService is not null)
+        {
+            await userActivityService.SetAppActive(isActive, forceRefresh);
+        }
     }
 
 }

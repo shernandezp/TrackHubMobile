@@ -8,7 +8,17 @@
 }
 
 .navbar-brand {
+	display: flex;
+	align-items: center;
 	font-size: 1.1rem;
+}
+
+/* The mark's spokes are hairlines below ~2rem; 2.25rem keeps them legible and still
+   leaves breathing room inside the 3.5rem bar (the portal sidenav renders it at 3rem). */
+.brand-logo {
+	width: 2.25rem;
+	height: 2.25rem;
+	margin-right: 0.5rem;
 }
 
 .oi {
@@ -29,6 +39,17 @@
 
 	.nav-item:last-of-type {
 		padding-bottom: 1rem;
+	}
+
+	/* The rows are flex containers, so the whitespace between icon and label in the
+	   markup collapses — the gap has to come from the icon itself. A fixed width also
+	   keeps the labels aligned across rows whose icons differ in width. */
+	.nav-item ::deep .nav-icon {
+		display: inline-block;
+		width: 1.25rem;
+		margin-right: 0.75rem;
+		text-align: center;
+		flex-shrink: 0;
 	}
 
 	.nav-item ::deep a {

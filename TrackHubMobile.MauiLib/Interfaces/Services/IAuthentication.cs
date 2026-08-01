@@ -17,7 +17,22 @@ namespace TrackHubMobile.Interfaces.Services;
 
 public interface IAuthentication
 {
-    Task LoginAsync();
+    /// <summary>
+    /// Ensures a usable access token, prompting the user only when needed.
+    /// Returns false when the sign-in was cancelled or failed; it never throws.
+    /// </summary>
+    Task<bool> LoginAsync();
+
     Task LogoutAsync();
+
+    /// <summary>
+    /// True when a usable access token is available, refreshing it silently if needed.
+    /// Never prompts the user.
+    /// </summary>
+    Task<bool> IsAuthenticatedAsync();
+
+    /// <summary>
+    /// Silently refreshes the access token. Returns null when an interactive sign-in is required.
+    /// </summary>
     Task<string?> RefreshAccessTokenAsync();
 }

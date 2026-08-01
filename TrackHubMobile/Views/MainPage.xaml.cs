@@ -20,6 +20,7 @@ namespace TrackHubMobile.Views;
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel viewModel;
+    private bool initialized;
 
     public MainPage(MainViewModel viewModel)
     {
@@ -30,7 +31,24 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await viewModel.InitializeAsync();
+
+        // The page reappears whenever the activity comes back to the foreground
+        // (including after the sign-in browser closes), so only the first pass
+        // starts the flow. Later retries are driven by App.OnResume.
+        if (initialized)
+        {
+            return;
+        }
+        initialized = true;
+
+        try
+        {
+            await viewModel.InitializeAsync();
+        }
+        catch (Exception)
+        {
+            // A failed sign-in already notified the user; never take the app down here
+        }
     }
 
 }
