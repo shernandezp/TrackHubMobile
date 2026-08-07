@@ -17,7 +17,9 @@ window.trackHubMap = {
         accOff: 'OFF'
     },
 
-    initMap: function (positions, labels) {
+    // options: { zoomPosition, attributionPosition } — screens that overlay the bottom of
+    // the map (a results sheet) move the controls out from under it.
+    initMap: function (positions, labels, options) {
         if (this.map) {
             this.destroyMap();
         }
@@ -25,6 +27,7 @@ window.trackHubMap = {
         if (labels) {
             this.labels = Object.assign({}, this.labels, labels);
         }
+        options = options || {};
         this.hasFittedView = false;
         this.openPopupId = null;
 
@@ -41,10 +44,10 @@ window.trackHubMap = {
         }).addTo(this.map);
 
         // Compact attribution in bottom-left
-        L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(this.map);
+        L.control.attribution({ position: options.attributionPosition || 'bottomleft', prefix: false }).addTo(this.map);
 
         // Zoom control in bottom-right
-        L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+        L.control.zoom({ position: options.zoomPosition || 'bottomright' }).addTo(this.map);
 
         this.clusterGroup = L.markerClusterGroup({
             maxClusterRadius: 45,
@@ -172,7 +175,7 @@ window.trackHubMap = {
 
     // Draws a track polyline with start/end markers and fits the map to it.
     // A single point renders as one stop marker.
-    // points: [{ lat, lng, speed, dateTime }], options: { color, weight }
+    // points: [{ lat, lng, speed, dateTime }], options: { color, weight, bottomInsetRatio }
     drawTrack: function (points, options) {
         if (!this.map) return;
 
@@ -180,55 +183,96 @@ window.trackHubMap = {
         if (!points || points.length === 0) return;
 
         options = options || {};
-        var color = options.color || '#0078d4';
-        var weight = options.weight || 4;
-
         this.trackLayer = L.layerGroup().addTo(this.map);
 
-        var latlngs = [];
-        for (var i = 0; i < points.length; i++) {
-            latlngs.push([points[i].lat, points[i].lng]);
-        }
-
-        if (latlngs.length === 1) {
-            var stopMarker = L.marker(latlngs[0], {
-                icon: this._trackEndpointIcon('#ef4444')
-            });
-            if (points[0].dateTime) {
-                stopMarker.bindPopup(this._trackEndpointPopup(points[0]));
-            }
-            this.trackLayer.addLayer(stopMarker);
-            this.map.setView(latlngs[0], 16);
+        if (points.length === 1) {
+            this.trackLayer.addLayer(this._stopMarker(points[0], '#ef4444', 18));
+            this.map.setView([points[0].lat, points[0].lng], 16);
             return;
         }
 
-        var polyline = L.polyline(latlngs, {
-            color: color,
-            weight: weight,
-            opacity: 0.85,
-            lineJoin: 'round',
-            lineCap: 'round'
-        });
+        var polyline = this._segmentPolyline(points, options);
         this.trackLayer.addLayer(polyline);
+        this.trackLayer.addLayer(this._endpointMarker(points[0], '#22c55e'));
+        this.trackLayer.addLayer(this._endpointMarker(points[points.length - 1], '#ef4444'));
 
-        var startMarker = L.marker(latlngs[0], {
-            icon: this._trackEndpointIcon('#22c55e')
-        });
-        var endMarker = L.marker(latlngs[latlngs.length - 1], {
-            icon: this._trackEndpointIcon('#ef4444')
-        });
+        this._fitTrack(polyline.getBounds(), options);
+    },
 
-        if (points[0].dateTime) {
-            startMarker.bindPopup(this._trackEndpointPopup(points[0]));
+    // Draws a whole range at once: one polyline per moving segment plus a dot per stop,
+    // fitted to everything. segments: [[{ lat, lng, speed, dateTime }, ...], ...]
+    drawTracks: function (segments, stops, options) {
+        if (!this.map) return;
+
+        this.clearTrack();
+        segments = segments || [];
+        stops = stops || [];
+        if (segments.length === 0 && stops.length === 0) return;
+
+        options = options || {};
+        this.trackLayer = L.layerGroup().addTo(this.map);
+
+        var bounds = L.latLngBounds([]);
+        var firstPoint = null;
+        var lastPoint = null;
+
+        for (var i = 0; i < segments.length; i++) {
+            var seg = segments[i];
+            if (!seg || seg.length === 0) continue;
+
+            if (seg.length > 1) {
+                var line = this._segmentPolyline(seg, options);
+                this.trackLayer.addLayer(line);
+                bounds.extend(line.getBounds());
+            } else {
+                bounds.extend([seg[0].lat, seg[0].lng]);
+            }
+
+            if (!firstPoint) firstPoint = seg[0];
+            lastPoint = seg[seg.length - 1];
         }
-        if (points[points.length - 1].dateTime) {
-            endMarker.bindPopup(this._trackEndpointPopup(points[points.length - 1]));
+
+        for (var j = 0; j < stops.length; j++) {
+            this.trackLayer.addLayer(this._stopMarker(stops[j], '#f59e0b', 12));
+            bounds.extend([stops[j].lat, stops[j].lng]);
         }
 
-        this.trackLayer.addLayer(startMarker);
-        this.trackLayer.addLayer(endMarker);
+        if (firstPoint) {
+            this.trackLayer.addLayer(this._endpointMarker(firstPoint, '#22c55e'));
+        }
+        if (lastPoint && lastPoint !== firstPoint) {
+            this.trackLayer.addLayer(this._endpointMarker(lastPoint, '#ef4444'));
+        }
 
-        this.map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
+        if (bounds.isValid()) {
+            this._fitTrack(bounds, options);
+        }
+    },
+
+    // Re-measures the container after the surrounding layout changed (a filter panel
+    // opening or closing), otherwise Leaflet keeps rendering at the stale size.
+    resize: function () {
+        if (this.map) {
+            this.map.invalidateSize();
+        }
+    },
+
+    // Re-fits the drawn track, used when the space left over by an overlay changes.
+    refit: function (options) {
+        if (!this.map || !this.trackLayer) return;
+
+        var bounds = L.latLngBounds([]);
+        this.trackLayer.eachLayer(function (layer) {
+            if (layer.getBounds) {
+                bounds.extend(layer.getBounds());
+            } else if (layer.getLatLng) {
+                bounds.extend(layer.getLatLng());
+            }
+        });
+
+        if (bounds.isValid()) {
+            this._fitTrack(bounds, options || {});
+        }
     },
 
     clearTrack: function () {
@@ -240,18 +284,64 @@ window.trackHubMap = {
         }
     },
 
-    _trackEndpointIcon: function (color) {
+    _segmentPolyline: function (points, options) {
+        var latlngs = [];
+        for (var i = 0; i < points.length; i++) {
+            latlngs.push([points[i].lat, points[i].lng]);
+        }
+        return L.polyline(latlngs, {
+            color: options.color || '#0078d4',
+            weight: options.weight || 4,
+            opacity: 0.85,
+            lineJoin: 'round',
+            lineCap: 'round'
+        });
+    },
+
+    _endpointMarker: function (point, color) {
+        return this._stopMarker(point, color, 18);
+    },
+
+    _stopMarker: function (point, color, size) {
+        var marker = L.marker([point.lat, point.lng], {
+            icon: this._trackEndpointIcon(color, size)
+        });
+        if (point.dateTime) {
+            marker.bindPopup(this._trackEndpointPopup(point));
+        }
+        return marker;
+    },
+
+    // Keeps the fitted track clear of whatever overlays the bottom of the map.
+    _fitTrack: function (bounds, options) {
+        var inset = 40;
+        if (options.bottomInsetRatio) {
+            inset = Math.max(40, Math.round(this.map.getSize().y * options.bottomInsetRatio));
+        }
+        // A single point has no extent to fit; recentring it would jump to max zoom
+        if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+            this.map.setView(bounds.getCenter(), this.map.getZoom());
+            return;
+        }
+        this.map.fitBounds(bounds, {
+            paddingTopLeft: [40, 40],
+            paddingBottomRight: [40, inset]
+        });
+    },
+
+    _trackEndpointIcon: function (color, size) {
+        size = size || 18;
         return L.divIcon({
             className: 'custom-marker',
             html: '<div style="' +
-                'width:18px;height:18px;' +
+                'width:' + size + 'px;height:' + size + 'px;' +
                 'background:' + color + ';' +
                 'border:2.5px solid rgba(255,255,255,0.95);' +
                 'border-radius:50%;' +
                 'box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-            iconSize: [18, 18],
-            iconAnchor: [9, 9],
-            popupAnchor: [0, -12]
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2],
+            popupAnchor: [0, -(size / 2 + 3)]
         });
     },
 

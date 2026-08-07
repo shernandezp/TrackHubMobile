@@ -297,12 +297,6 @@
   <data name="SourceTrackHub" xml:space="preserve">
     <value>TrackHub</value>
   </data>
-  <data name="FromDate" xml:space="preserve">
-    <value>Desde</value>
-  </data>
-  <data name="ToDate" xml:space="preserve">
-    <value>Hasta</value>
-  </data>
   <data name="Search" xml:space="preserve">
     <value>Buscar</value>
   </data>
@@ -330,8 +324,8 @@
   <data name="FeatureDisabledHistory" xml:space="preserve">
     <value>El historial almacenado no está habilitado para esta cuenta</value>
   </data>
-  <data name="MaxRangeExceeded" xml:space="preserve">
-    <value>El rango de fechas no es válido o supera los 31 días.</value>
+  <data name="InvalidDay" xml:space="preserve">
+    <value>Elige un día válido.</value>
   </data>
   <data name="HistoryError" xml:space="preserve">
     <value>No se pudo cargar el historial de posiciones. Verifica tu conexión e intenta de nuevo.</value>
@@ -350,5 +344,23 @@
   </data>
   <data name="Refresh" xml:space="preserve">
     <value>Actualizar</value>
+  </data>
+  <data name="Filters" xml:space="preserve">
+    <value>Filtros</value>
+  </data>
+  <data name="Last24Hours" xml:space="preserve">
+    <value>Últimas 24 h</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>Hoy</value>
+  </data>
+  <data name="Yesterday" xml:space="preserve">
+    <value>Ayer</value>
+  </data>
+  <data name="ChooseDay" xml:space="preserve">
+    <value>Elegir día</value>
+  </data>
+  <data name="AllTrips" xml:space="preserve">
+    <value>Todos los viajes</value>
   </data>
 </root>
