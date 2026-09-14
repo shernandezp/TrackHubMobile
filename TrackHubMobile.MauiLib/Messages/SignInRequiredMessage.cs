@@ -13,18 +13,8 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Models;
+namespace TrackHubMobile.Messages;
 
-namespace TrackHubMobile.Interfaces.Services;
-
-public interface IDataRefresh
-{
-    IEnumerable<PositionVm> Transporters { get; }
-
-    ValueTask DisposeAsync();
-    Task ForceRefreshAsync();
-    Task SetAppActive(bool isActive, bool forceRefresh = false);
-    void SetScreenActive(bool isActive);
-    void ApplyAccountSettings(bool refreshEnabled, int refreshIntervalSeconds);
-    void ResetSession();
-}
+// Raised when no usable session is left (never signed in, refresh token rejected, signed out);
+// the shell navigates to the sign-in page.
+public class SignInRequiredMessage;

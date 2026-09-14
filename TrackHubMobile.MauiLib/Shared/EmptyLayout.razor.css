@@ -1,0 +1,11 @@
+.plain-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+main {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg-page, #f0f2f5);
+}

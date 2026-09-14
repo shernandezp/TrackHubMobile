@@ -18,12 +18,21 @@ namespace TrackHubMobile.Interfaces.Services;
 public interface IAuthentication
 {
     /// <summary>
-    /// Ensures a usable access token, prompting the user only when needed.
-    /// Returns false when the sign-in was cancelled or failed; it never throws.
+    /// Ensures a usable access token silently (stored token, then refresh). Returns false when the
+    /// user has to sign in; it never throws and never prompts.
     /// </summary>
     Task<bool> LoginAsync();
 
+    /// <summary>
+    /// Signs in with the password grant and stores the tokens. Returns null on success, otherwise
+    /// a localized message for the sign-in page.
+    /// </summary>
+    Task<string?> SignInAsync(string email, string password);
+
     Task LogoutAsync();
+
+    /// <summary>Stored tokens exist (valid or refreshable). No network call.</summary>
+    Task<bool> HasSessionAsync();
 
     /// <summary>
     /// True when a usable access token is available, refreshing it silently if needed.

@@ -175,6 +175,19 @@ public class DataRefresh(
         }
     }
 
+    // Drops everything tied to the signed-out user so the next sign-in (possibly another account)
+    // starts from an empty fleet and re-reads settings and operational status.
+    public void ResetSession()
+    {
+        Transporters = [];
+        Interlocked.Exchange(ref _settingsFetchStarted, 0);
+        Interlocked.Exchange(ref _accountStatusFetchStarted, 0);
+        _accountOperational = true;
+        ApplyAccountSettings(true, (int)DefaultRefreshInterval.TotalSeconds);
+        WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(Transporters));
+        WeakReferenceMessenger.Default.Send(new AccountSuspendedMessage(false));
+    }
+
     // Fetches account settings once per session; falls back silently
     // to the 30 s default when the Manager call fails or returns nothing.
     private async Task EnsureAccountSettingsAsync(CancellationToken cancellationToken)

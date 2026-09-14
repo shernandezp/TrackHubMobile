@@ -363,4 +363,34 @@
   <data name="AllTrips" xml:space="preserve">
     <value>Todos los viajes</value>
   </data>
+  <data name="Email" xml:space="preserve">
+    <value>Correo electrónico</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Contraseña</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Iniciar sesión</value>
+  </data>
+  <data name="SignInSubtitle" xml:space="preserve">
+    <value>Inicia sesión con tu cuenta de TrackHub</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>El correo o la contraseña son incorrectos.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Demasiados intentos fallidos. Inténtalo de nuevo en unos minutos.</value>
+  </data>
+  <data name="AccountUnavailable" xml:space="preserve">
+    <value>Esta cuenta no está disponible. Contacta a tu administrador.</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Recordarme</value>
+  </data>
+  <data name="ShowPassword" xml:space="preserve">
+    <value>Mostrar contraseña</value>
+  </data>
+  <data name="HidePassword" xml:space="preserve">
+    <value>Ocultar contraseña</value>
+  </data>
 </root>

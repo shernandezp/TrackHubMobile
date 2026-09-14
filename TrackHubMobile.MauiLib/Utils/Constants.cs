@@ -36,4 +36,6 @@ public static class Constants
 
     public const string AccessToken = "access_token";
     public const string RefreshToken = "refresh_token";
+    public const string RememberedEmail = "remembered_email";
+    public const string RememberedPassword = "remembered_password";
 }

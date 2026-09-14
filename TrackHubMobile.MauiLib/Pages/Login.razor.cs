@@ -13,18 +13,23 @@
 //  limitations under the License.
 //
 
-using TrackHubMobile.Models;
+using Microsoft.AspNetCore.Components;
 
-namespace TrackHubMobile.Interfaces.Services;
+namespace TrackHubMobile.Pages;
 
-public interface IDataRefresh
+public partial class Login(NavigationManager navigation) : ComponentBase
 {
-    IEnumerable<PositionVm> Transporters { get; }
+    protected override async Task OnInitializedAsync()
+    {
+        ViewModel.OnUpdated = () => InvokeAsync(StateHasChanged);
+        await ViewModel.LoadAsync();
+    }
 
-    ValueTask DisposeAsync();
-    Task ForceRefreshAsync();
-    Task SetAppActive(bool isActive, bool forceRefresh = false);
-    void SetScreenActive(bool isActive);
-    void ApplyAccountSettings(bool refreshEnabled, int refreshIntervalSeconds);
-    void ResetSession();
+    private async Task SignInAsync()
+    {
+        if (await ViewModel.SignInAsync())
+        {
+            navigation.NavigateTo("/", replace: true);
+        }
+    }
 }
