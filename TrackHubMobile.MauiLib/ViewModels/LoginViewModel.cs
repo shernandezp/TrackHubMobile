@@ -52,7 +52,9 @@ public partial class LoginViewModel(IAuthentication authentication, IStorage sto
 
         RememberMe = true;
         Email = rememberedEmail;
-        Password = await storage.GetSecure(Constants.RememberedPassword) ?? string.Empty;
+        // Only the e-mail is remembered. The app already holds an offline_access refresh token, so
+        // keeping the password would add a reusable, unrevocable credential for no gain.
+        storage.ClearSecure(Constants.RememberedPassword);
     }
 
     public void TogglePasswordVisibility() => ShowPassword = !ShowPassword;
@@ -93,12 +95,10 @@ public partial class LoginViewModel(IAuthentication authentication, IStorage sto
         if (RememberMe)
         {
             await storage.SetSecure(Constants.RememberedEmail, email);
-            await storage.SetSecure(Constants.RememberedPassword, Password);
         }
         else
         {
             storage.ClearSecure(Constants.RememberedEmail);
-            storage.ClearSecure(Constants.RememberedPassword);
         }
     }
 }

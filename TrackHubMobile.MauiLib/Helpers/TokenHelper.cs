@@ -14,11 +14,15 @@
 //
 
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TrackHubMobile.Helpers;
 
 public class TokenHelper
 {
+    /// <summary>How long before its stated expiry a token stops being handed out.</summary>
+    private static readonly TimeSpan ExpiryMargin = TimeSpan.FromSeconds(60);
+
     public static bool IsTokenValid(string? token)
     {
         if (string.IsNullOrEmpty(token))
@@ -47,8 +51,9 @@ public class TokenHelper
             var expirationTime = DateTimeOffset.FromUnixTimeSeconds(payload.Exp.Value);
             var currentTime = DateTimeOffset.UtcNow;
 
-            // Check if the token has expired
-            return expirationTime > currentTime;
+            // Refreshed a minute early: a token the device clock still calls valid is regularly
+            // rejected by the server, and the app has no way back from that on its own.
+            return expirationTime - ExpiryMargin > currentTime;
         }
         catch
         {
@@ -70,6 +75,9 @@ public class TokenHelper
 
     private class JwtPayload
     {
+        // The claim is "exp": without the name the property never binds, every token reads as
+        // expired, and the app refreshes on every single request.
+        [JsonPropertyName("exp")]
         public long? Exp { get; set; }
     }
 }

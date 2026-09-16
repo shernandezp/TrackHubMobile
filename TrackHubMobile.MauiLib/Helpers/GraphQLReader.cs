@@ -13,8 +13,12 @@
 //  limitations under the License.
 //
 
+using System.Net;
 using System.Text;
 using System.Text.Json;
+using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
+using TrackHubMobile.Messages;
 using TrackHubMobile.Interfaces.Helpers;
 using TrackHubMobile.Interfaces.Services;
 using TrackHubMobile.Models;
@@ -25,7 +29,8 @@ namespace TrackHubMobile.Helpers;
 public sealed class GraphQLReader(
     IHttpClientFactory httpClientFactory, 
     IAuthentication authentication,
-    IStorage storage) : IGraphQLReader
+    IStorage storage,
+    ILogger<GraphQLReader> logger) : IGraphQLReader
 {
     private readonly HttpClient client = httpClientFactory.CreateClient("GraphQL");
     private static readonly JsonSerializerOptions _defaultJsonOptions = new()
@@ -46,18 +51,13 @@ public sealed class GraphQLReader(
             return default;
         }
 
-        using var jsonContent = new StringContent(
-            JsonSerializer.Serialize(requestBody),
-            Encoding.UTF8,
-            "application/json");
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        using var response = await SendWithReauthenticationAsync(
+            url, JsonSerializer.Serialize(requestBody), token, cancellationToken);
+        if (response is null)
         {
-            Content = jsonContent
-        };
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            return default;
+        }
 
-        using var response = await client.SendAsync(request, cancellationToken);
         await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken);
 
@@ -65,12 +65,10 @@ public sealed class GraphQLReader(
 
         if (root.TryGetProperty("errors", out var errorsElement) && errorsElement.ValueKind == JsonValueKind.Array)
         {
-            var errors = errorsElement.EnumerateArray()
-                .Select(e => e.GetProperty("message").GetString())
-                .Where(msg => !string.IsNullOrWhiteSpace(msg))
-                .ToList()!;
-            // TODO: Log errorsElement.GetRawText()
-
+            // Without this line a server refusal — a disabled feature, a suspended account — is
+            // indistinguishable from an empty result when someone has to explain it later.
+            logger.LogWarning("GraphQL query for {RootField} returned errors: {Errors}",
+                rootFieldName, errorsElement.GetRawText());
             return default;
         }
 
@@ -104,18 +102,13 @@ public sealed class GraphQLReader(
             return new GraphQLResult<T>(default, GraphQLResult<T>.UnauthenticatedCode, null);
         }
 
-        using var jsonContent = new StringContent(
-            JsonSerializer.Serialize(requestBody),
-            Encoding.UTF8,
-            "application/json");
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        using var response = await SendWithReauthenticationAsync(
+            url, JsonSerializer.Serialize(requestBody), token, cancellationToken);
+        if (response is null)
         {
-            Content = jsonContent
-        };
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            return new GraphQLResult<T>(default, GraphQLResult<T>.UnauthenticatedCode, null);
+        }
 
-        using var response = await client.SendAsync(request, cancellationToken);
         await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken);
 
@@ -159,6 +152,61 @@ public sealed class GraphQLReader(
         }
 
         return new GraphQLResult<T>(data, errorCode, errorMessage);
+    }
+
+    /// <summary>
+    /// Sends the request and, if the provider rejects the token with 401, re-authenticates once and
+    /// replays it. An unexpired token can still be revoked server-side, and without this the app
+    /// shows an empty or stale fleet until it is restarted.
+    /// <para>
+    /// The body travels as a string, not as an <see cref="HttpContent"/>: disposing a request
+    /// disposes its content, so a replay of the same object would throw instead of recovering.
+    /// </para>
+    /// </summary>
+    private async Task<HttpResponseMessage?> SendWithReauthenticationAsync(
+        string url,
+        string requestJson,
+        string token,
+        CancellationToken cancellationToken)
+    {
+        var response = await SendAsync(url, requestJson, token, cancellationToken);
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+        {
+            return response;
+        }
+
+        response.Dispose();
+        storage.ClearSecure(Constants.AccessToken);
+        var refreshed = await authentication.RefreshAccessTokenAsync();
+        if (string.IsNullOrEmpty(refreshed))
+        {
+            WeakReferenceMessenger.Default.Send(new SignInRequiredMessage());
+            return null;
+        }
+
+        response = await SendAsync(url, requestJson, refreshed, cancellationToken);
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+        {
+            return response;
+        }
+
+        response.Dispose();
+        WeakReferenceMessenger.Default.Send(new SignInRequiredMessage());
+        return null;
+    }
+
+    private async Task<HttpResponseMessage> SendAsync(
+        string url,
+        string requestJson,
+        string token,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        return await client.SendAsync(request, cancellationToken);
     }
 
     /// <summary>

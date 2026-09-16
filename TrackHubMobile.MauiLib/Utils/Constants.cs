@@ -37,5 +37,9 @@ public static class Constants
     public const string AccessToken = "access_token";
     public const string RefreshToken = "refresh_token";
     public const string RememberedEmail = "remembered_email";
+    /// <summary>
+    /// Only ever cleared now: earlier builds stored the account password here, and an upgrade has to
+    /// remove what they left behind.
+    /// </summary>
     public const string RememberedPassword = "remembered_password";
 }
