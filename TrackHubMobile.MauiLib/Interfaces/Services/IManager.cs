@@ -27,4 +27,10 @@ public interface IManager
     /// StatusId in {1,2} (Trial/Active) is operational; anything else is non-operational.
     /// </summary>
     Task<short?> GetAccountStatusAsync(CancellationToken cancellationToken);
+
+    /// <summary>The account's calendar: the zone its days start and end in.</summary>
+    Task<TimeZoneInfo> GetAccountTimeZoneAsync(CancellationToken cancellationToken);
+
+    /// <summary>Forgets what was cached for the signed-in user, so the next account starts clean.</summary>
+    void ResetSession();
 }

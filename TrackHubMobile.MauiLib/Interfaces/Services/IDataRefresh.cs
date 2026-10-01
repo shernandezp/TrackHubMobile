@@ -20,6 +20,7 @@ namespace TrackHubMobile.Interfaces.Services;
 public interface IDataRefresh
 {
     IEnumerable<PositionVm> Transporters { get; }
+    UnitStatusRules StatusRules { get; }
 
     ValueTask DisposeAsync();
     Task ForceRefreshAsync();

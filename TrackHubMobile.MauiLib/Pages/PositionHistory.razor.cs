@@ -61,7 +61,9 @@ public partial class PositionHistory : IDisposable
     private bool hasSearched;
     private bool showRangeError;
     private bool featureDisabled;
-    private bool hasError;
+    private string? errorKey;
+    private CancellationTokenSource? searchCancellation;
+    private TimeZoneInfo accountZone = TimeZoneInfo.Local;
     private bool mapInitialized;
     private bool showFilters;
     private bool sheetExpanded = true;
@@ -78,7 +80,10 @@ public partial class PositionHistory : IDisposable
     };
 
     // No future days to pick: there is nothing to show there.
-    private static string MaxDayText => DateTime.Today.ToString(DateFormat, CultureInfo.InvariantCulture);
+    private string MaxDayText => AccountNow.Date.ToString(DateFormat, CultureInfo.InvariantCulture);
+
+    // "Today" is the account's today, not the phone's.
+    private DateTime AccountNow => TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, accountZone).DateTime;
 
     protected override void OnParametersSet()
     {
@@ -90,6 +95,15 @@ public partial class PositionHistory : IDisposable
         // OnParametersSet only runs after this method completes, so the id must be
         // parsed here for the initial search to have it.
         Guid.TryParse(TransporterIdParam, out transporterId);
+
+        try
+        {
+            accountZone = await Manager.GetAccountTimeZoneAsync(CancellationToken.None);
+        }
+        catch
+        {
+            accountZone = TimeZoneInfo.Local;
+        }
 
         // The source switch is only offered when the account has the
         // gps.positionHistory feature; on any failure fall back to provider-only.
@@ -209,7 +223,7 @@ public partial class PositionHistory : IDisposable
     // Every option resolves to at most one day of data.
     private bool TryBuildRange(out DateTimeOffset from, out DateTimeOffset to)
     {
-        var now = DateTime.Now;
+        var now = AccountNow;
         switch (selectedPreset)
         {
             case RangePreset.Today:
@@ -225,10 +239,10 @@ public partial class PositionHistory : IDisposable
         }
     }
 
-    private static bool BuildRange(DateTime from, DateTime to, out DateTimeOffset rangeFrom, out DateTimeOffset rangeTo)
+    private bool BuildRange(DateTime from, DateTime to, out DateTimeOffset rangeFrom, out DateTimeOffset rangeTo)
     {
-        rangeFrom = ToLocalOffset(from);
-        rangeTo = ToLocalOffset(to);
+        rangeFrom = ToAccountOffset(from);
+        rangeTo = ToAccountOffset(to);
         return true;
     }
 
@@ -239,14 +253,14 @@ public partial class PositionHistory : IDisposable
         return false;
     }
 
-    private static DateTimeOffset ToLocalOffset(DateTime value)
-        => new(value, TimeZoneInfo.Local.GetUtcOffset(value));
+    private DateTimeOffset ToAccountOffset(DateTime value)
+        => new(DateTime.SpecifyKind(value, DateTimeKind.Unspecified), accountZone.GetUtcOffset(value));
 
     private async Task SearchAsync()
     {
         showRangeError = false;
         featureDisabled = false;
-        hasError = false;
+        errorKey = null;
 
         if (transporterId == Guid.Empty)
         {
@@ -260,6 +274,13 @@ public partial class PositionHistory : IDisposable
             return;
         }
 
+        // One search at a time: a newer choice supersedes the one in flight, so a tap on another
+        // day never spends the Router's per-minute budget on a result nobody will see.
+        searchCancellation?.Cancel();
+        searchCancellation?.Dispose();
+        searchCancellation = new CancellationTokenSource();
+        var cancellation = searchCancellation.Token;
+
         isLoading = true;
         hasSearched = false;
         selectedTripId = null;
@@ -270,12 +291,11 @@ public partial class PositionHistory : IDisposable
         try
         {
             var source = hasStoredHistoryFeature && useStoredSource ? StoredSource : null;
-            var result = await Router.GetTripsByTransporterAsync(
-                transporterId,
-                from,
-                to,
-                source,
-                CancellationToken.None);
+            var result = await Router.GetTripsByTransporterAsync(transporterId, from, to, source, cancellation);
+            if (cancellation.IsCancellationRequested)
+            {
+                return;
+            }
 
             if (result.IsFeatureDisabled)
             {
@@ -283,22 +303,29 @@ public partial class PositionHistory : IDisposable
             }
             else if (result.HasError && result.Data is null)
             {
-                hasError = true;
+                errorKey = ErrorKeyFor(result.ErrorCode);
             }
             else
             {
                 trips = result.Data?.ToList() ?? [];
             }
         }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            return;
+        }
         catch
         {
             // Offline or transport failure — show a localized error banner
-            hasError = true;
+            errorKey = "HistoryError";
         }
         finally
         {
-            hasSearched = true;
-            isLoading = false;
+            if (!cancellation.IsCancellationRequested)
+            {
+                hasSearched = true;
+                isLoading = false;
+            }
         }
 
         // The map is the point of the screen, so the filters fold away once they have
@@ -309,6 +336,14 @@ public partial class PositionHistory : IDisposable
 
         await DrawAllAsync();
     }
+
+    private static string ErrorKeyFor(string? code) => code switch
+    {
+        "TOO_MANY_REQUESTS" => "HistoryTooManyRequests",
+        "PROVIDER_CAPABILITY_NOT_SUPPORTED" => "HistoryProviderUnsupported",
+        "POSITION_HISTORY_LIMIT_EXCEEDED" => "HistoryLimitExceeded",
+        _ => "HistoryError",
+    };
 
     // Draws the whole range: every moving trip as its own polyline plus a dot per stop.
     private async Task DrawAllAsync()
@@ -431,6 +466,9 @@ public partial class PositionHistory : IDisposable
 
     public void Dispose()
     {
+        searchCancellation?.Cancel();
+        searchCancellation?.Dispose();
+
         try
         {
             _ = JS.InvokeVoidAsync("trackHubMap.destroyMap");

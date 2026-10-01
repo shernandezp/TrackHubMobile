@@ -15,10 +15,15 @@
 
 namespace TrackHubMobile.Models;
 
-// Minimal projection of the Manager accountContext read. StatusId mirrors
-// Common.Domain.Enums.AccountStatus: Trial=1, Active=2 (operational); Suspended=3, Cancelled=4,
-// Archived=5 (non-operational).
-public readonly record struct AccountContextVm(
-    short StatusId,
-    string? TimeZoneId = null
-    );
+// Neither a token nor SignInRequired means the token endpoint could not be reached: the stored
+// refresh token is still good and the caller should retry later.
+public readonly record struct TokenRefreshResult(string? AccessToken, bool SignInRequired)
+{
+    public static TokenRefreshResult Refreshed(string accessToken) => new(accessToken, false);
+
+    public static TokenRefreshResult Rejected { get; } = new(null, true);
+
+    public static TokenRefreshResult Unavailable { get; } = new(null, false);
+
+    public bool Succeeded => !string.IsNullOrEmpty(AccessToken);
+}

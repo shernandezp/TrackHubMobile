@@ -4,7 +4,6 @@ window.trackHubMap = {
     markers: {},
     trackLayer: null,
     hasFittedView: false,
-    openPopupId: null,
     labels: {
         moving: 'In Movement',
         stopped: 'Stopped',
@@ -29,7 +28,6 @@ window.trackHubMap = {
         }
         options = options || {};
         this.hasFittedView = false;
-        this.openPopupId = null;
 
         this.map = L.map('map', {
             zoomControl: false,
@@ -75,86 +73,92 @@ window.trackHubMap = {
         });
         this.map.addLayer(this.clusterGroup);
 
-        // Track which unit's popup is open so it survives marker rebuilds
-        var self = this;
-        this.map.on('popupopen', function (e) {
-            if (e.popup._source && e.popup._source.options.transporterId) {
-                self.openPopupId = e.popup._source.options.transporterId;
-            }
-        });
-        this.map.on('popupclose', function (e) {
-            if (e.popup._source && e.popup._source.options.transporterId === self.openPopupId) {
-                self.openPopupId = null;
-            }
-        });
-
         if (positions && positions.length > 0) {
             this.updateMarkers(positions, true);
         }
     },
 
-    // Rebuilds the markers. The view is fitted to the fleet only on the first
-    // load (or when fitView is true); periodic refreshes keep the user's
-    // pan/zoom and reopen the popup that was open before the rebuild.
+    // Markers are kept per unit and updated in place, so a refresh keeps the user's
+    // pan/zoom and any open popup. The view is fitted to the fleet only on the first
+    // load (or when fitView is true).
     updateMarkers: function (positions, fitView) {
         if (!this.map || !this.clusterGroup) return;
 
-        var reopenId = this.openPopupId;
+        positions = positions || [];
+        this._syncMarkers(positions);
 
-        this.clusterGroup.clearLayers();
-        this.markers = {};
+        if (positions.length === 0 || (!fitView && this.hasFittedView)) return;
 
-        if (!positions || positions.length === 0) return;
-
-        var bounds = [];
-        for (var i = 0; i < positions.length; i++) {
-            var p = positions[i];
-            var marker = this._createMarker(p);
-            this.clusterGroup.addLayer(marker);
-            this.markers[p.transporterId] = marker;
-            bounds.push([p.lat, p.lng]);
+        var bounds = positions.map(function (p) { return [p.lat, p.lng]; });
+        if (bounds.length === 1) {
+            this.map.setView(bounds[0], 15);
+        } else {
+            this.map.fitBounds(bounds, { padding: [50, 50] });
         }
-
-        if (fitView || !this.hasFittedView) {
-            if (bounds.length === 1) {
-                this.map.setView(bounds[0], 15);
-            } else {
-                this.map.fitBounds(bounds, { padding: [50, 50] });
-            }
-            this.hasFittedView = true;
-        }
-
-        if (reopenId && this.markers[reopenId]) {
-            this.openPopupId = reopenId;
-            var m = this.markers[reopenId];
-            // Only reopen when the marker is actually visible (not clustered)
-            var visible = this.clusterGroup.getVisibleParent(m);
-            if (visible === m) {
-                m.openPopup();
-            }
-        }
+        this.hasFittedView = true;
     },
 
     // Shows a single unit. preserveView keeps the current pan/zoom (used by the
     // periodic refresh); otherwise the map centers on the unit and opens its popup.
     focusSingleUnit: function (position, preserveView) {
-        if (!this.map) return;
+        if (!this.map || !this.clusterGroup) return;
 
-        var wasOpen = this.openPopupId === position.transporterId;
-
-        this.clusterGroup.clearLayers();
-        this.markers = {};
-
-        var marker = this._createMarker(position);
-        this.clusterGroup.addLayer(marker);
-        this.markers[position.transporterId] = marker;
+        this._syncMarkers([position]);
 
         if (!preserveView) {
             this.map.setView([position.lat, position.lng], 16);
             this.hasFittedView = true;
-            marker.openPopup();
-        } else if (wasOpen) {
-            marker.openPopup();
+            this.markers[position.transporterId].openPopup();
+        }
+    },
+
+    _syncMarkers: function (positions) {
+        var current = {};
+        var added = [];
+        for (var i = 0; i < positions.length; i++) {
+            var p = positions[i];
+            current[p.transporterId] = true;
+            var marker = this.markers[p.transporterId];
+            if (marker) {
+                this._updateMarker(marker, p);
+            } else {
+                marker = this._createMarker(p);
+                this.markers[p.transporterId] = marker;
+                added.push(marker);
+            }
+        }
+
+        var removed = [];
+        var ids = Object.keys(this.markers);
+        for (var j = 0; j < ids.length; j++) {
+            if (!current[ids[j]]) {
+                removed.push(this.markers[ids[j]]);
+                delete this.markers[ids[j]];
+            }
+        }
+
+        if (removed.length > 0) this.clusterGroup.removeLayers(removed);
+        if (added.length > 0) this.clusterGroup.addLayers(added);
+    },
+
+    // The cluster group re-clusters a moved marker itself (it listens to the marker's
+    // move event), and cluster icons depend only on child counts, so no refreshClusters.
+    _updateMarker: function (marker, p) {
+        var latLng = marker.getLatLng();
+        if (latLng.lat !== p.lat || latLng.lng !== p.lng) {
+            marker.setLatLng([p.lat, p.lng]);
+        }
+
+        var iconKey = this._iconKey(p);
+        if (marker.thIconKey !== iconKey) {
+            marker.setIcon(this._markerIcon(p));
+            marker.thIconKey = iconKey;
+        }
+
+        var popup = this._markerPopup(p);
+        if (marker.thPopup !== popup) {
+            marker.setPopupContent(popup);
+            marker.thPopup = popup;
         }
     },
 
@@ -170,7 +174,6 @@ window.trackHubMap = {
         }
         this.markers = {};
         this.hasFittedView = false;
-        this.openPopupId = null;
     },
 
     // Draws a track polyline with start/end markers and fits the map to it.
@@ -357,25 +360,45 @@ window.trackHubMap = {
         return html;
     },
 
+    _statusColors: {
+        moving:  { bg: '#22c55e', ring: 'rgba(34,197,94,0.25)',  glow: 'rgba(34,197,94,0.4)' },
+        stopped: { bg: '#ef4444', ring: 'rgba(239,68,68,0.25)',  glow: 'rgba(239,68,68,0.4)' },
+        offline: { bg: '#9ca3af', ring: 'rgba(156,163,175,0.25)', glow: 'rgba(156,163,175,0.3)' }
+    },
+
     _createMarker: function (p) {
-        var status = this._getStatus(p);
-        var rotation = p.course || 0;
-        var colors = {
-            moving:  { bg: '#22c55e', ring: 'rgba(34,197,94,0.25)',  glow: 'rgba(34,197,94,0.4)' },
-            stopped: { bg: '#ef4444', ring: 'rgba(239,68,68,0.25)',  glow: 'rgba(239,68,68,0.4)' },
-            offline: { bg: '#9ca3af', ring: 'rgba(156,163,175,0.25)', glow: 'rgba(156,163,175,0.3)' }
-        };
-        var c = colors[status];
+        var popup = this._markerPopup(p);
+        var marker = L.marker([p.lat, p.lng], { icon: this._markerIcon(p) }).bindPopup(popup, {
+            className: 'th-popup',
+            maxWidth: 260,
+            minWidth: 180,
+            closeButton: true
+        });
+        marker.thIconKey = this._iconKey(p);
+        marker.thPopup = popup;
+        return marker;
+    },
+
+    _iconKey: function (p) {
+        return p.status + '|' + (p.speed > 0 ? (p.course || 0) : 'still');
+    },
+
+    _markerPopup: function (p) {
+        return this._buildPopup(p, p.status, this._statusColors[p.status].bg);
+    },
+
+    _markerIcon: function (p) {
+        var c = this._statusColors[p.status];
 
         var innerCircle;
         if (p.speed > 0) {
-            innerCircle = '<svg viewBox="0 0 24 24" width="14" height="14" style="transform:rotate(' + rotation + 'deg)">' +
+            innerCircle = '<svg viewBox="0 0 24 24" width="14" height="14" style="transform:rotate(' + (p.course || 0) + 'deg)">' +
                 '<path d="M12 2 L18 18 L12 14 L6 18 Z" fill="white" opacity="0.95"/></svg>';
         } else {
             innerCircle = '<div style="width:7px;height:7px;border-radius:50%;background:white;opacity:0.9;"></div>';
         }
 
-        var icon = L.divIcon({
+        return L.divIcon({
             className: 'custom-marker',
             html: '<div style="' +
                 'width:32px;height:32px;' +
@@ -391,24 +414,6 @@ window.trackHubMap = {
             iconAnchor: [16, 16],
             popupAnchor: [0, -20]
         });
-
-        var popup = this._buildPopup(p, status, c.bg);
-        return L.marker([p.lat, p.lng], { icon: icon, transporterId: p.transporterId }).bindPopup(popup, {
-            className: 'th-popup',
-            maxWidth: 260,
-            minWidth: 180,
-            closeButton: true
-        });
-    },
-
-    _getStatus: function (p) {
-        var now = new Date();
-        var deviceTime = new Date(p.dateTime);
-        var diffHours = (now - deviceTime) / (1000 * 60 * 60);
-
-        if (diffHours > 2) return 'offline';
-        if (p.speed > 0) return 'moving';
-        return 'stopped';
     },
 
     _buildPopup: function (p, status, color) {

@@ -15,6 +15,7 @@
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using TrackHubMobile.Interfaces.Helpers;
 using TrackHubMobile.Interfaces.Services;
 using TrackHubMobile.Messages;
 using TrackHubMobile.Models;
@@ -25,7 +26,7 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
 {
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private TransporterMapViewModel ViewModel { get; set; } = default!;
-    [Inject] private IRouter Router { get; set; } = default!;
+    [Inject] private ITransporterHelper TransporterHelper { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "transporterId")]
     public string? TransporterIdParam { get; set; }
@@ -103,22 +104,21 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
 
     private async Task FocusOnSingleUnit(Guid transporterId, bool preserveView)
     {
-        try
+        if (!mapInitialized) return;
+
+        if (ViewModel.Find(transporterId) is { } unit)
         {
-            var device = await Router.GetDeviceAsync(transporterId, CancellationToken.None);
-            if (device.DeviceDateTime != default)
+            try
             {
-                var jsObj = MapPositionToJs(device);
-                await JS.InvokeVoidAsync("trackHubMap.focusSingleUnit", jsObj, preserveView);
+                await JS.InvokeVoidAsync("trackHubMap.focusSingleUnit", MapPositionToJs(unit), preserveView);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or OperationCanceledException)
+            {
             }
         }
-        catch
+        else if (!preserveView && ViewModel.Transporters is not null)
         {
-            // If single unit fetch fails, show all markers instead
-            if (!preserveView && ViewModel.Transporters is not null)
-            {
-                await UpdateMapMarkers(ViewModel.Transporters, fitView: true);
-            }
+            await UpdateMapMarkers(ViewModel.Transporters, fitView: true);
         }
     }
 
@@ -141,12 +141,13 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
     {
         MainThread.BeginInvokeOnMainThread(async () =>
         {
+            ViewModel.UpdateFromRefresh(message.Value, message.Rules);
             if (string.IsNullOrEmpty(TransporterIdParam))
             {
                 // Keep the user's pan/zoom on periodic refreshes
                 await UpdateMapMarkers(message.Value, fitView: false);
             }
-            else if (mapInitialized && Guid.TryParse(TransporterIdParam, out var tid))
+            else if (Guid.TryParse(TransporterIdParam, out var tid))
             {
                 // Single-unit focus keeps tracking the unit as it moves
                 await FocusOnSingleUnit(tid, preserveView: true);
@@ -154,14 +155,20 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         });
     }
 
-    private static object MapPositionToJs(PositionVm p) => new
+    private object MapPositionToJs(PositionVm p) => new
     {
         lat = p.Latitude,
         lng = p.Longitude,
         name = p.DeviceName,
         speed = p.Speed,
         dateTime = p.DeviceDateTime.ToString("o"),
-        transporterType = p.TransporterType,
+        status = ViewModel.StatusRules.StatusOf(p, DateTimeOffset.UtcNow) switch
+        {
+            UnitStatus.Offline => "offline",
+            UnitStatus.Moving => "moving",
+            _ => "stopped"
+        },
+        transporterType = TransporterHelper.GetTransporterTypeName(p.TransporterType),
         course = p.Course ?? 0,
         address = p.Address ?? "",
         city = p.City ?? "",

@@ -25,12 +25,13 @@ public partial class TransporterMapViewModel(IDataRefresh dataRefresh) : BaseVie
     [ObservableProperty]
     private bool isRefreshing;
 
+    public UnitStatusRules StatusRules { get; private set; } = UnitStatusRules.Default;
+
     public async Task LoadDataAsync()
     {
-        var existing = dataRefresh.Transporters;
-        if (existing.Any())
+        if (dataRefresh.Transporters.Any())
         {
-            Transporters = existing;
+            UpdateFromRefresh(dataRefresh.Transporters, dataRefresh.StatusRules);
             return;
         }
 
@@ -38,11 +39,20 @@ public partial class TransporterMapViewModel(IDataRefresh dataRefresh) : BaseVie
         try
         {
             await dataRefresh.ForceRefreshAsync();
-            Transporters = dataRefresh.Transporters;
+            UpdateFromRefresh(dataRefresh.Transporters, dataRefresh.StatusRules);
         }
         finally
         {
             IsRefreshing = false;
         }
     }
+
+    public void UpdateFromRefresh(IEnumerable<PositionVm> transporters, UnitStatusRules rules)
+    {
+        StatusRules = rules;
+        Transporters = transporters;
+    }
+
+    public PositionVm? Find(Guid transporterId)
+        => Transporters?.Where(t => t.TransporterId == transporterId).Select(t => (PositionVm?)t).FirstOrDefault();
 }

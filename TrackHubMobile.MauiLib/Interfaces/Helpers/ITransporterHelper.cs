@@ -19,4 +19,5 @@ public interface ITransporterHelper
 {
     string GetTimeDifference(DateTimeOffset inputTime);
     string GetAccStatus(bool? accStatus);
+    string GetTransporterTypeName(string? transporterType);
 }

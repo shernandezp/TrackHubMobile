@@ -178,13 +178,13 @@ public sealed class GraphQLReader(
         response.Dispose();
         storage.ClearSecure(Constants.AccessToken);
         var refreshed = await authentication.RefreshAccessTokenAsync();
-        if (string.IsNullOrEmpty(refreshed))
+        if (refreshed.SignInRequired)
         {
             WeakReferenceMessenger.Default.Send(new SignInRequiredMessage());
             return null;
         }
 
-        response = await SendAsync(url, requestJson, refreshed, cancellationToken);
+        response = await SendAsync(url, requestJson, AccessTokenOrThrow(refreshed), cancellationToken);
         if (response.StatusCode != HttpStatusCode.Unauthorized)
         {
             return response;
@@ -221,7 +221,14 @@ public sealed class GraphQLReader(
             return token;
         }
 
-        token = await authentication.RefreshAccessTokenAsync();
-        return string.IsNullOrEmpty(token) ? null : token;
+        var refreshed = await authentication.RefreshAccessTokenAsync();
+        return refreshed.SignInRequired ? null : AccessTokenOrThrow(refreshed);
     }
+
+    // An unreachable token endpoint fails like any other network error: callers keep their data and
+    // retry, and the stored refresh token survives.
+    private static string AccessTokenOrThrow(TokenRefreshResult refreshed)
+        => refreshed.Succeeded
+            ? refreshed.AccessToken!
+            : throw new HttpRequestException("The token endpoint could not be reached.");
 }

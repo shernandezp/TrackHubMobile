@@ -13,6 +13,8 @@
 //  limitations under the License.
 //
 
+using TrackHubMobile.Models;
+
 namespace TrackHubMobile.Interfaces.Services;
 
 public interface IAuthentication
@@ -41,7 +43,7 @@ public interface IAuthentication
     Task<bool> IsAuthenticatedAsync();
 
     /// <summary>
-    /// Silently refreshes the access token. Returns null when an interactive sign-in is required.
+    /// Silently refreshes the access token; an unreachable token endpoint keeps the refresh token.
     /// </summary>
-    Task<string?> RefreshAccessTokenAsync();
+    Task<TokenRefreshResult> RefreshAccessTokenAsync();
 }

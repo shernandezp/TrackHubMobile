@@ -19,6 +19,7 @@ using TrackHubMobile.Helpers;
 using TrackHubMobile.Interfaces.Helpers;
 using TrackHubMobile.Interfaces.Services;
 using TrackHubMobile.Messages;
+using TrackHubMobile.Models;
 using TrackHubMobile.Utils;
 
 namespace TrackHubMobile.Services;
@@ -87,7 +88,7 @@ public class Authentication(
             || !string.IsNullOrEmpty(await storage.GetSecure(Constants.RefreshToken));
 
     public async Task<bool> IsAuthenticatedAsync()
-        => await HasValidAccessTokenAsync() || await RefreshAccessTokenAsync() is not null;
+        => await HasValidAccessTokenAsync() || (await RefreshAccessTokenAsync()).Succeeded;
 
     public async Task LogoutAsync()
     {
@@ -112,7 +113,7 @@ public class Authentication(
         RequireSignIn();
     }
 
-    public async Task<string?> RefreshAccessTokenAsync()
+    public async Task<TokenRefreshResult> RefreshAccessTokenAsync()
     {
         await gate.WaitAsync();
         try
@@ -120,7 +121,7 @@ public class Authentication(
             var token = await storage.GetSecure(Constants.AccessToken);
             if (TokenHelper.IsTokenValid(token))
             {
-                return token;
+                return TokenRefreshResult.Refreshed(token!);
             }
 
             return await TryRefreshAsync();
@@ -132,15 +133,15 @@ public class Authentication(
     }
 
     /// <summary>
-    /// Silent refresh. Returns the new access token, or null when the stored refresh
-    /// token is missing, rejected, or unreachable. The gate is expected to be held.
+    /// Silent refresh. Only a missing refresh token or a 400/401 from the token endpoint requires
+    /// sign-in; anything else keeps the refresh token for a later retry. The gate is expected to be held.
     /// </summary>
-    private async Task<string?> TryRefreshAsync()
+    private async Task<TokenRefreshResult> TryRefreshAsync()
     {
         var refreshToken = await storage.GetSecure(Constants.RefreshToken);
         if (string.IsNullOrEmpty(refreshToken))
         {
-            return null;
+            return TokenRefreshResult.Rejected;
         }
 
         try
@@ -160,16 +161,18 @@ public class Authentication(
                 {
                     storage.ClearSecure(Constants.RefreshToken);
                     RequireSignIn();
+                    return TokenRefreshResult.Rejected;
                 }
-                return null;
+                return TokenRefreshResult.Unavailable;
             }
 
-            return await StoreTokensAsync(await response.Content.ReadAsStringAsync());
+            var accessToken = await StoreTokensAsync(await response.Content.ReadAsStringAsync());
+            return accessToken is null ? TokenRefreshResult.Unavailable : TokenRefreshResult.Refreshed(accessToken);
         }
         catch
         {
             // Offline, timed out or malformed response; the next tick retries
-            return null;
+            return TokenRefreshResult.Unavailable;
         }
     }
 

@@ -14,6 +14,7 @@
 //
 
 using TrackHubMobile.Messages;
+using TrackHubMobile.Models;
 
 namespace TrackHubMobile.ViewModels;
 
@@ -48,18 +49,18 @@ public partial class HomeViewModel : BaseViewModel
         MainThread.BeginInvokeOnMainThread(() =>
         {
             var transporters = message.Value.ToList();
-            var offlineThreshold = DateTimeOffset.UtcNow.AddHours(-2);
+            var now = DateTimeOffset.UtcNow;
 
             // Offline units report a stale last-known speed, so movement stats
             // only consider online units — offline takes precedence.
-            var online = transporters.Where(t => t.DeviceDateTime >= offlineThreshold).ToList();
+            var online = transporters.Where(t => message.Rules.IsOnline(t, now)).ToList();
             var moving = online.Where(t => t.Speed > 0).ToList();
 
             Total = transporters.Count;
             Offline = Total - online.Count;
             InMovement = moving.Count;
             Stopped = online.Count - moving.Count;
-            Speeding = moving.Count(t => t.Speed > 80);
+            Speeding = moving.Count(UnitStatusRules.IsSpeeding);
             IgnitionOn = online.Count(t => t.Attributes?.Ignition == true);
             AverageSpeed = moving.Count > 0
                 ? Math.Round(moving.Average(t => t.Speed), 1)

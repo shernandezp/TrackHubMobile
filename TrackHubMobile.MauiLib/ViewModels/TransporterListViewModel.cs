@@ -29,18 +29,16 @@ public partial class TransporterListViewModel(IDataRefresh dataRefresh) : BaseVi
     [ObservableProperty]
     private string searchText = string.Empty;
 
-    public IEnumerable<PositionVm>? FilteredTransporters =>
-        string.IsNullOrWhiteSpace(SearchText)
-            ? Transporters
-            : Transporters?.Where(t =>
-                t.DeviceName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+    // Materialized once per refresh or search, not per render; Virtualize needs a collection.
+    public List<PositionVm>? FilteredTransporters { get; private set; }
+
+    public UnitStatusRules StatusRules { get; private set; } = UnitStatusRules.Default;
 
     public async Task LoadDataAsync()
     {
-        var existing = dataRefresh.Transporters;
-        if (existing.Any())
+        if (dataRefresh.Transporters.Any())
         {
-            Transporters = existing;
+            UpdateFromRefresh(dataRefresh.Transporters, dataRefresh.StatusRules);
             return;
         }
 
@@ -48,7 +46,7 @@ public partial class TransporterListViewModel(IDataRefresh dataRefresh) : BaseVi
         try
         {
             await dataRefresh.ForceRefreshAsync();
-            Transporters = dataRefresh.Transporters;
+            UpdateFromRefresh(dataRefresh.Transporters, dataRefresh.StatusRules);
         }
         finally
         {
@@ -56,9 +54,20 @@ public partial class TransporterListViewModel(IDataRefresh dataRefresh) : BaseVi
         }
     }
 
-    public void UpdateFromRefresh(IEnumerable<PositionVm> transporters)
+    public void UpdateFromRefresh(IEnumerable<PositionVm> transporters, UnitStatusRules rules)
     {
+        StatusRules = rules;
         Transporters = transporters;
+        ApplyFilter();
+    }
+
+    public UnitStatus StatusOf(PositionVm unit) => StatusRules.StatusOf(unit, DateTimeOffset.UtcNow);
+
+    private void ApplyFilter()
+    {
+        FilteredTransporters = string.IsNullOrWhiteSpace(SearchText)
+            ? Transporters?.ToList()
+            : Transporters?.Where(t => t.DeviceName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)).ToList();
         OnPropertyChanged(nameof(FilteredTransporters));
     }
 
@@ -77,6 +86,6 @@ public partial class TransporterListViewModel(IDataRefresh dataRefresh) : BaseVi
     public void OnSearchChanged(string value)
     {
         SearchText = value;
-        OnPropertyChanged(nameof(FilteredTransporters));
+        ApplyFilter();
     }
 }
