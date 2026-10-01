@@ -18,7 +18,8 @@ using TrackHubMobile.Models;
 
 namespace TrackHubMobile.Messages;
 
-public class DataRefreshedMessage(IEnumerable<PositionVm> transporters) 
+public class DataRefreshedMessage(IEnumerable<PositionVm> transporters, UnitStatusRules rules)
     : ValueChangedMessage<IEnumerable<PositionVm>>(transporters)
 {
+    public UnitStatusRules Rules { get; } = rules;
 }

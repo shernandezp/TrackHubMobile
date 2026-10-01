@@ -1,10 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.trackhubmobile" android:versionCode="1" android:versionName="1.0">
-	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="TrackHubMobile">
+	<!-- allowBackup is false on purpose: app-private storage holds the EncryptedSharedPreferences
+	     blob with the access and refresh tokens. Its Keystore key does not travel with a backup, so
+	     a restore produces an unusable copy of the ciphertext on another device — there is nothing
+	     to gain by shipping it off the handset. -->
+	<!-- Every endpoint is HTTPS; below API 28 the platform would otherwise allow a plaintext
+	     fallback, which on a captive-portal network is exactly where tokens would leak. -->
+	<application android:usesCleartextTraffic="false" android:allowBackup="false" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="TrackHubMobile">
 	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 	<queries>
 		<intent>
 			<action android:name="android.support.customtabs.action.CustomTabsService" />

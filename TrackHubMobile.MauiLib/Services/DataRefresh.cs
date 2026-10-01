@@ -24,23 +24,41 @@ public class DataRefresh(
     IRouter router,
     IManager manager,
     IAuthentication authentication,
-    ILocalizationResourceManager localization) : IAsyncDisposable, IDataRefresh
+    ILocalizationResourceManager localization,
+    TimeProvider? timeProvider = null) : IAsyncDisposable, IDataRefresh
 {
     private static readonly TimeSpan DefaultRefreshInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan MinRefreshInterval = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan RestartDelay = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan MaxSettingsRetryDelay = TimeSpan.FromMinutes(5);
+    // Absorbs timer jitter so a retry due one interval later is not pushed back a whole extra tick.
+    private static readonly TimeSpan SettingsRetryTolerance = TimeSpan.FromSeconds(1);
 
-    private Timer? _timer;
+    private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
+    private ITimer? _timer;
     private bool _isActiveScreen;
     private bool _isAppActive = true;
-    private int _isRefreshing;
     private CancellationTokenSource? _cancellationTokenSource;
     private readonly object _timerLock = new();
+
+    // Held for the whole refresh: a tick still unwinding after a screen change keeps the next one out
+    // instead of racing it.
+    private readonly SemaphoreSlim _refreshGate = new(1, 1);
+
+    // A tick that finds the gate taken leaves this set; whoever releases the gate runs it as a catch-up.
+    private int _tickPending;
+
+    // Sign-out cancels the session, and every write a refresh makes is checked against it under this
+    // lock, so a refresh that started before sign-out can never publish into the next session.
+    private readonly object _sessionLock = new();
+    private CancellationTokenSource _session = new();
 
     // Account-settings-driven refresh configuration (defaults: enabled, 30 s)
     private TimeSpan _refreshInterval = DefaultRefreshInterval;
     private bool _refreshEnabled = true;
     private int _settingsFetchStarted;
+    private TimeSpan _settingsRetryDelay;
+    private DateTimeOffset _settingsRetryAt = DateTimeOffset.MinValue;
 
     // Account operational-status gating: once a non-operational status is observed,
     // operational queries are suppressed and a suspension message is raised.
@@ -48,6 +66,8 @@ public class DataRefresh(
     private volatile bool _accountOperational = true;
 
     public IEnumerable<PositionVm> Transporters { get; private set; } = [];
+
+    public UnitStatusRules StatusRules { get; private set; } = UnitStatusRules.Default;
 
     public void SetScreenActive(bool isActive)
     {
@@ -65,6 +85,7 @@ public class DataRefresh(
         }
     }
 
+    // Waits for a refresh already in flight instead of running beside it.
     public async Task ForceRefreshAsync()
     {
         var cts = _cancellationTokenSource;
@@ -72,12 +93,15 @@ public class DataRefresh(
 
         try
         {
-            await RefreshDataAsync(cts.Token);
+            await _refreshGate.WaitAsync(cts.Token);
         }
-        catch (ObjectDisposedException)
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
         {
-            // CTS was disposed during navigation — safe to ignore
+            return;
         }
+
+        await RefreshHoldingGateAsync(cts);
+        await RunPendingTicksAsync();
     }
 
     private void CheckTimerStatus()
@@ -95,7 +119,7 @@ public class DataRefresh(
                     // When auto-refresh is disabled by account settings we still
                     // fire once to load the initial snapshot, but never repeat.
                     var period = _refreshEnabled ? _refreshInterval : Timeout.InfiniteTimeSpan;
-                    _timer = new Timer(OnTick, null, startDelay, period);
+                    _timer = _time.CreateTimer(OnTick, null, startDelay, period);
                 }
             }
             else
@@ -115,25 +139,38 @@ public class DataRefresh(
         _timer?.Dispose();
         _timer = null;
 
-        // Reset reentrancy guard so the next timer start isn't blocked
-        Interlocked.Exchange(ref _isRefreshing, 0);
-
-        // Dispose CTS after resetting the guard to avoid ObjectDisposedException
-        // while OnTick is still reading the token
         oldCts?.Dispose();
     }
 
     private async void OnTick(object? state)
     {
-        if (Interlocked.CompareExchange(ref _isRefreshing, 1, 0) != 0)
-            return;
+        Interlocked.Exchange(ref _tickPending, 1);
+        await RunPendingTicksAsync();
+    }
 
+    private async Task RunPendingTicksAsync()
+    {
+        while (Volatile.Read(ref _tickPending) == 1 && _refreshGate.Wait(0))
+        {
+            Interlocked.Exchange(ref _tickPending, 0);
+            await RefreshHoldingGateAsync(_cancellationTokenSource);
+        }
+    }
+
+    private async Task RefreshHoldingGateAsync(CancellationTokenSource? screen)
+    {
         try
         {
-            var cts = _cancellationTokenSource;
-            if (cts == null || cts.IsCancellationRequested) return;
+            if (screen == null) return;
 
-            await RefreshDataAsync(cts.Token);
+            CancellationToken session;
+            lock (_sessionLock)
+            {
+                session = _session.Token;
+            }
+
+            using var tick = CancellationTokenSource.CreateLinkedTokenSource(screen.Token, session);
+            await RefreshDataAsync(tick.Token, session);
         }
         catch (ObjectDisposedException)
         {
@@ -141,7 +178,7 @@ public class DataRefresh(
         }
         finally
         {
-            Interlocked.Exchange(ref _isRefreshing, 0);
+            _refreshGate.Release();
         }
     }
 
@@ -175,37 +212,119 @@ public class DataRefresh(
         }
     }
 
-    // Fetches account settings once per session; falls back silently
-    // to the 30 s default when the Manager call fails or returns nothing.
-    private async Task EnsureAccountSettingsAsync(CancellationToken cancellationToken)
+    // Drops everything tied to the signed-out user so the next sign-in (possibly another account)
+    // starts from an empty fleet and re-reads settings and operational status.
+    public void ResetSession()
     {
+        lock (_sessionLock)
+        {
+            _session.Cancel();
+            _session.Dispose();
+            _session = new CancellationTokenSource();
+
+            Transporters = [];
+            StatusRules = UnitStatusRules.Default;
+            manager.ResetSession();
+            Interlocked.Exchange(ref _settingsFetchStarted, 0);
+            _settingsRetryDelay = TimeSpan.Zero;
+            _settingsRetryAt = DateTimeOffset.MinValue;
+            Interlocked.Exchange(ref _accountStatusFetchStarted, 0);
+            _accountOperational = true;
+            ApplyAccountSettings(true, (int)DefaultRefreshInterval.TotalSeconds);
+            WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(Transporters, StatusRules));
+            WeakReferenceMessenger.Default.Send(new AccountSuspendedMessage(false));
+        }
+    }
+
+    private bool PublishIfCurrent(CancellationToken session, Action publish)
+    {
+        lock (_sessionLock)
+        {
+            if (session.IsCancellationRequested) return false;
+            publish();
+            return true;
+        }
+    }
+
+    // The screens handle the message on the main thread, where sign-out also runs; re-checking there
+    // keeps a queued update from landing after the reset.
+    private void PostToMainThreadIfCurrent(CancellationToken session, Action action)
+        => MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (!session.IsCancellationRequested) action();
+        });
+
+    // Applies the account settings once per session. Until a read succeeds the defaults stay in force;
+    // a failed or empty read is retried after one refresh interval, doubling up to
+    // MaxSettingsRetryDelay, so a permanent refusal does not hit the Manager on every tick.
+    private async Task EnsureAccountSettingsAsync(CancellationToken cancellationToken, CancellationToken session)
+    {
+        var now = _time.GetUtcNow();
+        lock (_sessionLock)
+        {
+            if (now + SettingsRetryTolerance < _settingsRetryAt) return;
+        }
+
         if (Interlocked.CompareExchange(ref _settingsFetchStarted, 1, 0) != 0)
             return;
 
+        var applied = false;
+        var cancelled = false;
         try
         {
             var settings = await manager.GetAccountSettingsAsync(cancellationToken);
-            if (settings.HasValue && settings.Value.AccountId != Guid.Empty)
+            if (settings is { } value && value.AccountId != Guid.Empty)
             {
                 // RefreshMapInterval is expressed in seconds
-                ApplyAccountSettings(settings.Value.RefreshMap, settings.Value.RefreshMapInterval);
+                applied = PublishIfCurrent(session, () =>
+                {
+                    ApplyAccountSettings(value.RefreshMap, value.RefreshMapInterval);
+                    StatusRules = UnitStatusRules.FromOnlineInterval(value.OnlineInterval);
+                    _settingsRetryDelay = TimeSpan.Zero;
+                    _settingsRetryAt = DateTimeOffset.MinValue;
+                });
             }
         }
         catch (OperationCanceledException)
         {
-            // The attempt never completed — allow a retry on the next session tick
-            Interlocked.Exchange(ref _settingsFetchStarted, 0);
+            cancelled = true;
         }
         catch
         {
-            // Keep the 30 s defaults when the settings cannot be retrieved
         }
+        finally
+        {
+            if (!applied)
+            {
+                if (!cancelled)
+                {
+                    ScheduleSettingsRetry(now, session);
+                }
+                Interlocked.Exchange(ref _settingsFetchStarted, 0);
+            }
+        }
+    }
+
+    private void ScheduleSettingsRetry(DateTimeOffset attemptedAt, CancellationToken session)
+    {
+        TimeSpan interval;
+        lock (_timerLock)
+        {
+            interval = _refreshInterval;
+        }
+
+        PublishIfCurrent(session, () =>
+        {
+            var delay = _settingsRetryDelay == TimeSpan.Zero ? interval : _settingsRetryDelay * 2;
+            _settingsRetryDelay = delay < MaxSettingsRetryDelay ? delay : MaxSettingsRetryDelay;
+            _settingsRetryAt = attemptedAt + _settingsRetryDelay;
+        });
     }
 
     // Checks the account's operational status once per session. When non-operational, raises a
     // suspension message and suppresses further operational queries. Unknown/failed reads fail open on
     // the client (the backend still fail-closes every data call with ACCOUNT_SUSPENDED).
-    private async Task<bool> EnsureAccountOperationalAsync(CancellationToken cancellationToken)
+    private async Task<bool> EnsureAccountOperationalAsync(CancellationToken cancellationToken, CancellationToken session)
     {
         if (!_accountOperational)
         {
@@ -223,9 +342,11 @@ public class DataRefresh(
             // StatusId 1 (Trial) / 2 (Active) are operational; anything else is not.
             if (statusId.HasValue && statusId.Value != 1 && statusId.Value != 2)
             {
-                _accountOperational = false;
-                MainThread.BeginInvokeOnMainThread(() =>
-                    WeakReferenceMessenger.Default.Send(new AccountSuspendedMessage(true)));
+                if (PublishIfCurrent(session, () => _accountOperational = false))
+                {
+                    PostToMainThreadIfCurrent(session, () =>
+                        WeakReferenceMessenger.Default.Send(new AccountSuspendedMessage(true)));
+                }
                 return false;
             }
         }
@@ -242,7 +363,7 @@ public class DataRefresh(
         return _accountOperational;
     }
 
-    private async Task RefreshDataAsync(CancellationToken cancellationToken)
+    private async Task RefreshDataAsync(CancellationToken cancellationToken, CancellationToken session)
     {
         try
         {
@@ -253,12 +374,11 @@ public class DataRefresh(
             if (!await authentication.IsAuthenticatedAsync()) return;
 
             // Block operational queries when the account is non-operational.
-            if (!await EnsureAccountOperationalAsync(cancellationToken)) return;
+            if (!await EnsureAccountOperationalAsync(cancellationToken, session)) return;
 
-            await EnsureAccountSettingsAsync(cancellationToken);
+            await EnsureAccountSettingsAsync(cancellationToken, session);
 
             var result = await router.GetDevicePositionsByUserAsync(cancellationToken);
-            if (cancellationToken.IsCancellationRequested) return;
 
             // The session lapsed while the query was in flight — the sign-in prompt handles it
             if (result.IsUnauthenticated) return;
@@ -266,32 +386,35 @@ public class DataRefresh(
             if (result.HasError && result.Data is null)
             {
                 // Failed read — keep the cached data; only toast when nothing is cached
-                if (!Transporters.Any())
-                {
-                    MainThread.BeginInvokeOnMainThread(() =>
-                        WeakReferenceMessenger.Default.Send(new ToastMessage(localization["Error"], true)));
-                }
+                ToastIfNothingCached(session);
                 return;
             }
 
             // An empty fleet is a valid result and must reach the screens
-            Transporters = result.Data ?? [];
-            WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(Transporters));
+            var units = result.Data?.ToList() ?? [];
+            UnitStatusRules rules = UnitStatusRules.Default;
+            if (PublishIfCurrent(session, () => { Transporters = units; rules = StatusRules; }))
+            {
+                PostToMainThreadIfCurrent(session, () =>
+                    WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(units, rules)));
+            }
         }
         catch (OperationCanceledException)
         {
-            // Expected when screen/app goes inactive during a request
+            // Expected when screen/app goes inactive or the user signs out during a request
         }
         catch
         {
-            // Only show error if we have no cached data at all
-            if (!Transporters.Any())
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    WeakReferenceMessenger.Default.Send(new ToastMessage(localization["Error"], true));
-                });
-            }
+            ToastIfNothingCached(session);
+        }
+    }
+
+    private void ToastIfNothingCached(CancellationToken session)
+    {
+        if (!Transporters.Any())
+        {
+            PostToMainThreadIfCurrent(session, () =>
+                WeakReferenceMessenger.Default.Send(new ToastMessage(localization["Error"], true)));
         }
     }
 

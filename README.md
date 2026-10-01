@@ -14,7 +14,7 @@ We believe in the strength of community collaboration to create effective and ac
 
 ## Overview
 
-TrackHub Mobile is the .NET MAUI (Blazor Hybrid) monitoring application for account users. It authenticates through the AuthorityServer with the `mobile_client` OAuth client (Authorization Code Flow + PKCE) and consumes the Router and Manager GraphQL APIs: fleet dashboard, live map, transporter list/detail, and position history with a TrackHub-stored vs GPS-provider source selector.
+TrackHub Mobile is the .NET MAUI (Blazor Hybrid) monitoring application for account users. It authenticates through the AuthorityServer with the `mobile_client` OAuth client (in-app sign-in page, OAuth 2.0 password grant + refresh tokens) and consumes the Router and Manager GraphQL APIs: fleet dashboard, live map, transporter list/detail, and position history with a TrackHub-stored vs GPS-provider source selector.
 
 **Status: work in progress.**
 

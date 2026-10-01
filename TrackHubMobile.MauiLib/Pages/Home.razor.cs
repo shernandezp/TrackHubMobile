@@ -37,6 +37,9 @@ public partial class Home(
 
     protected override void OnInitialized()
     {
+        // The base subscribes to LocationChanged, which is the only thing that ever marks the screen
+        // inactive. Without it the 30 s position refresh keeps running after the driver navigates away.
+        base.OnInitialized();
         ViewModel.OnUpdated = StateHasChanged;
     }
 

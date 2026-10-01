@@ -1,3 +1,11 @@
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject IAuthentication Authentication
+@inject IDataRefresh DataRefresh
+@using CommunityToolkit.Mvvm.Messaging
+@using TrackHubMobile.Interfaces.Services
+@using TrackHubMobile.Messages
+
 <Router AppAssembly="@GetType().Assembly"
 		AdditionalAssemblies="new[] { typeof(TrackHubMobile.Pages.Home).Assembly }">
 	<Found Context="routeData">
@@ -9,3 +17,32 @@
 		</LayoutView>
 	</NotFound>
 </Router>
+
+@code {
+	protected override void OnInitialized()
+	{
+		WeakReferenceMessenger.Default.Register<SignInRequiredMessage>(this, (_, _) => InvokeAsync(GoToLogin));
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender && !await Authentication.HasSessionAsync())
+		{
+			GoToLogin();
+		}
+	}
+
+	private void GoToLogin()
+	{
+		DataRefresh.ResetSession();
+		if (!Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("login", StringComparison.OrdinalIgnoreCase))
+		{
+			Navigation.NavigateTo("login", replace: true);
+		}
+	}
+
+	public void Dispose()
+	{
+		WeakReferenceMessenger.Default.Unregister<SignInRequiredMessage>(this);
+	}
+}

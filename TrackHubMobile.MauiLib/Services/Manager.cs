@@ -28,6 +28,11 @@ public sealed class Manager(IGraphQLReader reader) : IManager
 {
     // Account settings are fetched once per session and cached in memory
     private AccountSettingsVm? _cachedSettings;
+    private TimeZoneInfo? _cachedTimeZone;
+
+    // A read that started before sign-out must not seed the next user's cache.
+    private readonly object _cacheLock = new();
+    private int _session;
 
     /// <summary>
     /// Retrieves the account settings of the current user's account.
@@ -37,6 +42,7 @@ public sealed class Manager(IGraphQLReader reader) : IManager
     /// <returns>The <see cref="AccountSettingsVm"/> or null when unavailable.</returns>
     public async Task<AccountSettingsVm?> GetAccountSettingsAsync(CancellationToken cancellationToken)
     {
+        var session = Volatile.Read(ref _session);
         if (_cachedSettings.HasValue)
         {
             return _cachedSettings;
@@ -58,9 +64,25 @@ public sealed class Manager(IGraphQLReader reader) : IManager
         var response = await reader.ExecuteGraphQLQuery<AccountSettingsVm?>(Constants.ManagerUrl, query, "accountSettingsByUser", cancellationToken);
         if (response.HasValue && response.Value.AccountId != Guid.Empty)
         {
-            _cachedSettings = response;
+            lock (_cacheLock)
+            {
+                if (session == _session)
+                {
+                    _cachedSettings = response;
+                }
+            }
         }
         return response;
+    }
+
+    public void ResetSession()
+    {
+        lock (_cacheLock)
+        {
+            _session++;
+            _cachedSettings = null;
+            _cachedTimeZone = null;
+        }
     }
 
     /// <summary>
@@ -101,5 +123,39 @@ public sealed class Manager(IGraphQLReader reader) : IManager
 
         var response = await reader.ExecuteGraphQLQuery<AccountContextVm?>(Constants.ManagerUrl, query, "accountContext", cancellationToken);
         return response?.StatusId;
+    }
+
+    // Days are the account's days, whatever zone the phone is set to; an unknown or unreadable zone
+    // falls back to the phone's own.
+    public async Task<TimeZoneInfo> GetAccountTimeZoneAsync(CancellationToken cancellationToken)
+    {
+        var session = Volatile.Read(ref _session);
+        if (_cachedTimeZone is not null)
+        {
+            return _cachedTimeZone;
+        }
+
+        const string query = @"
+        query {
+          accountContext {
+            statusId
+            timeZoneId
+          }
+        }";
+
+        var response = await reader.ExecuteGraphQLQuery<AccountContextVm?>(Constants.ManagerUrl, query, "accountContext", cancellationToken);
+        if (response?.TimeZoneId is { Length: > 0 } id && TimeZoneInfo.TryFindSystemTimeZoneById(id, out var zone))
+        {
+            lock (_cacheLock)
+            {
+                if (session == _session)
+                {
+                    _cachedTimeZone = zone;
+                }
+            }
+            return zone;
+        }
+
+        return TimeZoneInfo.Local;
     }
 }

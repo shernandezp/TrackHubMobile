@@ -19,5 +19,6 @@ namespace TrackHubMobile.Models;
 // Common.Domain.Enums.AccountStatus: Trial=1, Active=2 (operational); Suspended=3, Cancelled=4,
 // Archived=5 (non-operational).
 public readonly record struct AccountContextVm(
-    short StatusId
+    short StatusId,
+    string? TimeZoneId = null
     );

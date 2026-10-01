@@ -22,7 +22,7 @@
             <em>@LRM["Loading"]...</em>
         </div>
     }
-    else if (ViewModel.FilteredTransporters?.Any() != true)
+    else if (ViewModel.FilteredTransporters is not { Count: > 0 })
     {
         <div class="empty-state">
             <p>@LRM["NoUnitsFound"]</p>
@@ -31,15 +31,16 @@
     else
     {
         <div class="unit-list">
-            @foreach (var item in ViewModel.FilteredTransporters!)
-            {
-                var isSelected = ViewModel.SelectedTransporter?.TransporterId == item.TransporterId;
-                <div class="unit-card @(isSelected ? "expanded" : "")" @onclick="() => ViewModel.OnRowClick(item)">
+            <Virtualize Items="ViewModel.FilteredTransporters" Context="item" ItemSize="70" OverscanCount="6">
+                @{
+                    var isSelected = ViewModel.SelectedTransporter?.TransporterId == item.TransporterId;
+                }
+                <div @key="item.TransporterId" class="unit-card @(isSelected ? "expanded" : "")" @onclick="() => ViewModel.OnRowClick(item)">
                     <div class="unit-summary">
                         <div class="unit-status @GetStatusClass(item)"></div>
                         <div class="unit-info">
                             <span class="unit-name">@item.DeviceName</span>
-                            <span class="unit-type">@item.TransporterType</span>
+                            <span class="unit-type">@transporterHelper.GetTransporterTypeName(item.TransporterType)</span>
                         </div>
                         <div class="unit-meta">
                             <span class="unit-speed">@item.Speed km/h</span>
@@ -58,7 +59,7 @@
                         </div>
                     }
                 </div>
-            }
+            </Virtualize>
         </div>
     }
 </div>

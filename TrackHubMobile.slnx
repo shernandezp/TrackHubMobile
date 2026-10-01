@@ -7,6 +7,7 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="TrackHubMobile.MauiLib/TrackHubMobile.MauiLib.csproj" />
+  <Project Path="tests/TrackHubMobile.Tests/TrackHubMobile.Tests.csproj" />
   <Project Path="TrackHubMobile/TrackHubMobile.csproj">
     <Deploy />
   </Project>

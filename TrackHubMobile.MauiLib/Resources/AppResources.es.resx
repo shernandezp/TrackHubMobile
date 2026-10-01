@@ -219,6 +219,78 @@
   <data name="TransporterType" xml:space="preserve">
     <value>Tipo</value>
   </data>
+  <data name="TransporterTypeAircraft" xml:space="preserve">
+    <value>Aeronave</value>
+  </data>
+  <data name="TransporterTypeAsset" xml:space="preserve">
+    <value>Activo</value>
+  </data>
+  <data name="TransporterTypeBicycle" xml:space="preserve">
+    <value>Bicicleta</value>
+  </data>
+  <data name="TransporterTypeBoat" xml:space="preserve">
+    <value>Embarcación</value>
+  </data>
+  <data name="TransporterTypeCar" xml:space="preserve">
+    <value>Automóvil</value>
+  </data>
+  <data name="TransporterTypeCargoContainer" xml:space="preserve">
+    <value>Contenedor de carga</value>
+  </data>
+  <data name="TransporterTypeConstructionVehicle" xml:space="preserve">
+    <value>Vehículo de construcción</value>
+  </data>
+  <data name="TransporterTypeChild" xml:space="preserve">
+    <value>Niño</value>
+  </data>
+  <data name="TransporterTypeDeliveryVan" xml:space="preserve">
+    <value>Furgoneta de reparto</value>
+  </data>
+  <data name="TransporterTypeDrone" xml:space="preserve">
+    <value>Dron</value>
+  </data>
+  <data name="TransporterTypeElderlyPerson" xml:space="preserve">
+    <value>Adulto mayor</value>
+  </data>
+  <data name="TransporterTypeFleetVehicle" xml:space="preserve">
+    <value>Vehículo de flota</value>
+  </data>
+  <data name="TransporterTypeHeavyEquipment" xml:space="preserve">
+    <value>Maquinaria pesada</value>
+  </data>
+  <data name="TransporterTypeLivestock" xml:space="preserve">
+    <value>Ganado</value>
+  </data>
+  <data name="TransporterTypeMotorcycle" xml:space="preserve">
+    <value>Motocicleta</value>
+  </data>
+  <data name="TransporterTypePackage" xml:space="preserve">
+    <value>Paquete</value>
+  </data>
+  <data name="TransporterTypePerson" xml:space="preserve">
+    <value>Persona</value>
+  </data>
+  <data name="TransporterTypePet" xml:space="preserve">
+    <value>Mascota</value>
+  </data>
+  <data name="TransporterTypeSchoolBus" xml:space="preserve">
+    <value>Bus escolar</value>
+  </data>
+  <data name="TransporterTypeScooter" xml:space="preserve">
+    <value>Scooter</value>
+  </data>
+  <data name="TransporterTypeTaxi" xml:space="preserve">
+    <value>Taxi</value>
+  </data>
+  <data name="TransporterTypeTool" xml:space="preserve">
+    <value>Herramienta</value>
+  </data>
+  <data name="TransporterTypeTruck" xml:space="preserve">
+    <value>Camión</value>
+  </data>
+  <data name="TransporterTypeTractor" xml:space="preserve">
+    <value>Tractor</value>
+  </data>
   <data name="Coordinates" xml:space="preserve">
     <value>Coordenadas</value>
   </data>
@@ -330,6 +402,15 @@
   <data name="HistoryError" xml:space="preserve">
     <value>No se pudo cargar el historial de posiciones. Verifica tu conexión e intenta de nuevo.</value>
   </data>
+  <data name="HistoryTooManyRequests" xml:space="preserve">
+    <value>Demasiadas búsquedas de historial en poco tiempo. Espera un minuto e intenta de nuevo.</value>
+  </data>
+  <data name="HistoryProviderUnsupported" xml:space="preserve">
+    <value>El proveedor GPS de esta unidad no ofrece historial de posiciones.</value>
+  </data>
+  <data name="HistoryLimitExceeded" xml:space="preserve">
+    <value>Este rango tiene demasiadas posiciones para mostrar. Elige un rango más corto.</value>
+  </data>
   <data name="History" xml:space="preserve">
     <value>Historial</value>
   </data>
@@ -362,5 +443,35 @@
   </data>
   <data name="AllTrips" xml:space="preserve">
     <value>Todos los viajes</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Correo electrónico</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Contraseña</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Iniciar sesión</value>
+  </data>
+  <data name="SignInSubtitle" xml:space="preserve">
+    <value>Inicia sesión con tu cuenta de TrackHub</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>El correo o la contraseña son incorrectos.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Demasiados intentos fallidos. Inténtalo de nuevo en unos minutos.</value>
+  </data>
+  <data name="AccountUnavailable" xml:space="preserve">
+    <value>Esta cuenta no está disponible. Contacta a tu administrador.</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Recordarme</value>
+  </data>
+  <data name="ShowPassword" xml:space="preserve">
+    <value>Mostrar contraseña</value>
+  </data>
+  <data name="HidePassword" xml:space="preserve">
+    <value>Ocultar contraseña</value>
   </data>
 </root>

@@ -12,11 +12,13 @@
     <link rel="stylesheet" href="css/font-awesome/css/all.min.css" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="TrackHubMobile.styles.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- Vendored, not fetched: this WebView hosts the Blazor JS-interop bridge, so a script from a
+         third-party CDN would run with reach into .NET, and the map would simply fail offline. -->
+    <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="lib/leaflet.markercluster/MarkerCluster.css" />
+    <link rel="stylesheet" href="lib/leaflet.markercluster/MarkerCluster.Default.css" />
+    <script src="lib/leaflet/leaflet.js"></script>
+    <script src="lib/leaflet.markercluster/leaflet.markercluster.js"></script>
     <style>
         html {
             height: 100%;

@@ -39,6 +39,7 @@ public static partial class MauiProgram
         //ViewModels
         builder.Services.AddSingleton<AboutViewModel>();
         builder.Services.AddSingleton<HomeViewModel>();
+        builder.Services.AddSingleton<LoginViewModel>();
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<NavMenuViewModel>();
         builder.Services.AddSingleton<TransporterDetailViewModel>();
@@ -53,7 +54,10 @@ public static partial class MauiProgram
         {
             client.Timeout = TimeSpan.FromSeconds(10);
         });
-        builder.Services.AddHttpClient("Auth");
+        builder.Services.AddHttpClient("Auth", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddSingleton(AppInfo.Current);
 

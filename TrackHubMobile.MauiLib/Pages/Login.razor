@@ -1,0 +1,54 @@
+@page "/login"
+@layout EmptyLayout
+@inject LoginViewModel ViewModel
+
+<div class="login-page">
+    <div class="login-header">
+        <img class="login-logo" src="images/logo-th-badge.svg" alt="" />
+        <h1>TrackHub</h1>
+        <p class="login-subtitle">@LRM["SignInSubtitle"]</p>
+    </div>
+
+    <EditForm Model="ViewModel" OnSubmit="SignInAsync" class="login-card" novalidate>
+        <div class="login-field">
+            <label for="email">@LRM["Email"]</label>
+            <input id="email" class="form-control" type="email" inputmode="email" autocomplete="username"
+                   autocapitalize="none" spellcheck="false" disabled="@ViewModel.Busy"
+                   @bind="ViewModel.Email" @bind:event="oninput" />
+        </div>
+        <div class="login-field">
+            <label for="password">@LRM["Password"]</label>
+            <div class="password-wrap">
+                <input id="password" class="form-control" type="@(ViewModel.ShowPassword ? "text" : "password")"
+                       autocomplete="current-password" disabled="@ViewModel.Busy"
+                       @bind="ViewModel.Password" @bind:event="oninput" />
+                <button type="button" class="password-toggle" @onclick="ViewModel.TogglePasswordVisibility"
+                        aria-label="@LRM[ViewModel.ShowPassword ? "HidePassword" : "ShowPassword"]"
+                        title="@LRM[ViewModel.ShowPassword ? "HidePassword" : "ShowPassword"]">
+                    <i class="fas @(ViewModel.ShowPassword ? "fa-eye-slash" : "fa-eye")"></i>
+                </button>
+            </div>
+        </div>
+
+        <label class="login-remember">
+            <input type="checkbox" disabled="@ViewModel.Busy" @bind="ViewModel.RememberMe" />
+            <span>@LRM["RememberMe"]</span>
+        </label>
+
+        @if (ViewModel.Error is not null)
+        {
+            <p class="login-error" role="alert">@ViewModel.Error</p>
+        }
+
+        <button type="submit" class="btn btn-primary login-button" disabled="@(!ViewModel.CanSubmit)">
+            @if (ViewModel.Busy)
+            {
+                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            }
+            else
+            {
+                <span>@LRM["SignIn"]</span>
+            }
+        </button>
+    </EditForm>
+</div>

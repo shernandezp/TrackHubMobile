@@ -44,7 +44,7 @@ public partial class TransporterList(
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            ViewModel.UpdateFromRefresh(message.Value);
+            ViewModel.UpdateFromRefresh(message.Value, message.Rules);
             StateHasChanged();
         });
     }
@@ -54,12 +54,12 @@ public partial class TransporterList(
         ViewModel.OnSearchChanged(e.Value?.ToString() ?? string.Empty);
     }
 
-    private static string GetStatusClass(PositionVm unit)
+    private string GetStatusClass(PositionVm unit) => ViewModel.StatusOf(unit) switch
     {
-        var hoursSinceReport = (DateTimeOffset.UtcNow - unit.DeviceDateTime).TotalHours;
-        if (hoursSinceReport > 2) return "status-offline";
-        return unit.Speed > 0 ? "status-moving" : "status-stopped";
-    }
+        UnitStatus.Offline => "status-offline",
+        UnitStatus.Moving => "status-moving",
+        _ => "status-stopped"
+    };
 
     public new void Dispose()
     {

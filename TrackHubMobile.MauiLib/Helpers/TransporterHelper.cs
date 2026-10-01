@@ -19,6 +19,25 @@ namespace TrackHubMobile.Helpers;
 
 public class TransporterHelper(ILocalizationResourceManager localization) : ITransporterHelper
 {
+    // The Router sends the GraphQL enum literal (CARGO_CONTAINER); older feeds send the C# name (CargoContainer).
+    private static readonly Dictionary<string, string> TransporterTypeKeys = new[]
+    {
+        "Aircraft", "Asset", "Bicycle", "Boat", "Car", "CargoContainer", "ConstructionVehicle", "Child",
+        "DeliveryVan", "Drone", "ElderlyPerson", "FleetVehicle", "HeavyEquipment", "Livestock", "Motorcycle",
+        "Package", "Person", "Pet", "SchoolBus", "Scooter", "Taxi", "Tool", "Truck", "Tractor"
+    }.ToDictionary(name => name, name => "TransporterType" + name, StringComparer.OrdinalIgnoreCase);
+
+    public string GetTransporterTypeName(string? transporterType)
+    {
+        if (string.IsNullOrEmpty(transporterType))
+            return string.Empty;
+
+        return TransporterTypeKeys.TryGetValue(transporterType.Replace("_", string.Empty), out var key)
+            && localization[key] is { Length: > 0 } name
+                ? name
+                : transporterType;
+    }
+
     public string GetTimeDifference(DateTimeOffset inputTime)
     {
         // Both operands are absolute instants (UTC), so the elapsed time is
