@@ -20,20 +20,12 @@ using TrackHubMobile.Utils;
 
 namespace TrackHubMobile.Services;
 
-/// <summary>
-/// The Router class provides methods to interact with GraphQL APIs for retrieving device position data.
-/// </summary>
 public sealed class Router(IGraphQLReader reader) : IRouter
 {
-    /// <summary>
-    /// Retrieves a list of device positions associated with the current user.
-    /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
     /// <returns>A <see cref="GraphQLResult{T}"/> wrapping the positions, so callers can
     /// distinguish an empty fleet from a failed read.</returns>
     public async Task<GraphQLResult<IEnumerable<PositionVm>>> GetDevicePositionsByUserAsync(CancellationToken cancellationToken)
     {
-        // GraphQL query to fetch device positions by user
         const string query = @"
         query {
           devicePositionsByUser {
@@ -54,19 +46,11 @@ public sealed class Router(IGraphQLReader reader) : IRouter
           }
         }";
 
-        // Execute the query and return the result
         return await reader.ExecuteGraphQLQueryWithErrors<IEnumerable<PositionVm>>(Constants.RouterUrl, query, "devicePositionsByUser", cancellationToken);
     }
 
-    /// <summary>
-    /// Retrieves the position of a specific device by its transporter ID.
-    /// </summary>
-    /// <param name="transporterId">The unique identifier of the transporter.</param>
-    /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
-    /// <returns>A <see cref="PositionVm"/> object representing the device position.</returns>
     public async Task<PositionVm> GetDeviceAsync(Guid transporterId, CancellationToken cancellationToken)
     {
-        // GraphQL query to fetch a device position by transporter ID
         string query = $@"
         query {{
           devicePositionByTransporter(query: {{ transporterId: ""{transporterId}"" }}) {{
@@ -94,19 +78,13 @@ public sealed class Router(IGraphQLReader reader) : IRouter
           }}
         }}";
 
-        // Execute the query and return the result
         var response = await reader.ExecuteGraphQLQuery<PositionVm>(Constants.RouterUrl, query, "devicePositionByTransporter", cancellationToken);
         return response;
     }
 
-    /// <summary>
-    /// Retrieves the trips of a transporter within a date range.
-    /// </summary>
-    /// <param name="transporterId">The unique identifier of the transporter.</param>
     /// <param name="from">Range start (inclusive).</param>
     /// <param name="to">Range end (inclusive).</param>
     /// <param name="source">Optional history source enum literal (STORED or PROVIDER). Omitted when null.</param>
-    /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
     /// <returns>A <see cref="GraphQLResult{T}"/> wrapping the trips or the first GraphQL error.</returns>
     public async Task<GraphQLResult<IEnumerable<TripVm>>> GetTripsByTransporterAsync(
         Guid transporterId,
@@ -139,14 +117,9 @@ public sealed class Router(IGraphQLReader reader) : IRouter
         return await reader.ExecuteGraphQLQueryWithErrors<IEnumerable<TripVm>>(Constants.RouterUrl, query, "tripsByTransporter", cancellationToken);
     }
 
-    /// <summary>
-    /// Retrieves the raw positions of a transporter within a date range.
-    /// </summary>
-    /// <param name="transporterId">The unique identifier of the transporter.</param>
     /// <param name="from">Range start (inclusive).</param>
     /// <param name="to">Range end (inclusive).</param>
     /// <param name="source">Optional history source enum literal (STORED or PROVIDER). Omitted when null.</param>
-    /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
     /// <returns>A <see cref="GraphQLResult{T}"/> wrapping the positions or the first GraphQL error.</returns>
     public async Task<GraphQLResult<IEnumerable<PositionVm>>> GetPositionsByTransporterAsync(
         Guid transporterId,

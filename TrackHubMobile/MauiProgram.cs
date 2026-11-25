@@ -36,7 +36,6 @@ public static partial class MauiProgram
                    fonts.AddFont("OpenSans-SemiBold.ttf", "OpenSansSemiBold");
                });
 
-        //ViewModels
         builder.Services.AddSingleton<AboutViewModel>();
         builder.Services.AddSingleton<HomeViewModel>();
         builder.Services.AddSingleton<LoginViewModel>();
@@ -46,7 +45,6 @@ public static partial class MauiProgram
         builder.Services.AddSingleton<TransporterListViewModel>();
         builder.Services.AddSingleton<TransporterMapViewModel>();
 
-        //Pages
         // Singleton will not allow NavigationManager to be injected
         builder.Services.AddSingleton<MainPage>();
 
@@ -61,13 +59,11 @@ public static partial class MauiProgram
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddSingleton(AppInfo.Current);
 
-        //Helpers
         builder.Services.AddSingleton<IGraphQLReader, GraphQLReader>();
         builder.Services.AddSingleton<ILocalizationResourceManager, LocalizationResourceManager>();
         builder.Services.AddSingleton<IToastDisplay, ToastDisplay>();
         builder.Services.AddSingleton<ITransporterHelper, TransporterHelper>();
 
-        //Services
         builder.Services.AddSingleton<IAuthentication, Authentication>();
         builder.Services.AddSingleton<IDataRefresh, DataRefresh>();
         builder.Services.AddSingleton<IManager, Manager>();

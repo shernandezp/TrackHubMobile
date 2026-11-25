@@ -8,7 +8,6 @@
     background: var(--bg-page, #f0f2f5);
 }
 
-/* ── Top bar ────────────────────────────────────────── */
 .history-topbar {
     display: flex;
     align-items: center;
@@ -63,7 +62,6 @@
         color: #fff;
     }
 
-/* ── Filters ────────────────────────────────────────── */
 .filter-panel {
     flex-shrink: 0;
     padding: 0.6rem 0.75rem 0.75rem;
@@ -114,7 +112,6 @@
     gap: 0.5rem;
 }
 
-/* ── Map ────────────────────────────────────────────── */
 .map-area {
     position: relative;
     flex: 1;
@@ -156,7 +153,6 @@
     box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08));
 }
 
-/* ── Trips sheet ────────────────────────────────────── */
 .trips-sheet {
     position: absolute;
     left: 0;

@@ -399,7 +399,6 @@ public class DataRefresh(
             // once-per-session settings/status reads for the first authenticated tick.
             if (!await authentication.IsAuthenticatedAsync()) return;
 
-            // Block operational queries when the account is non-operational.
             if (!await EnsureAccountOperationalAsync(cancellationToken, session)) return;
 
             await EnsureAccountSettingsAsync(cancellationToken, session);

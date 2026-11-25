@@ -20,13 +20,8 @@ using TrackHubMobile.Utils;
 
 namespace TrackHubMobile.Services;
 
-/// <summary>
-/// The Manager class provides methods to interact with the Manager GraphQL API
-/// for retrieving account settings and account feature flags.
-/// </summary>
 public sealed class Manager(IGraphQLReader reader) : IManager
 {
-    // Account settings are fetched once per session and cached in memory
     private AccountSettingsVm? _cachedSettings;
     private TimeZoneInfo? _cachedTimeZone;
 
@@ -35,10 +30,8 @@ public sealed class Manager(IGraphQLReader reader) : IManager
     private int _session;
 
     /// <summary>
-    /// Retrieves the account settings of the current user's account.
     /// The first successful result is cached for the session.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
     /// <returns>The <see cref="AccountSettingsVm"/> or null when unavailable.</returns>
     public async Task<AccountSettingsVm?> GetAccountSettingsAsync(CancellationToken cancellationToken)
     {
@@ -48,7 +41,6 @@ public sealed class Manager(IGraphQLReader reader) : IManager
             return _cachedSettings;
         }
 
-        // GraphQL query to fetch the account settings for the current user
         const string query = @"
         query {
           accountSettingsByUser {
@@ -85,15 +77,8 @@ public sealed class Manager(IGraphQLReader reader) : IManager
         }
     }
 
-    /// <summary>
-    /// Retrieves the feature flags of an account.
-    /// </summary>
-    /// <param name="accountId">The unique identifier of the account.</param>
-    /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
-    /// <returns>A collection of <see cref="AccountFeatureVm"/> objects.</returns>
     public async Task<IEnumerable<AccountFeatureVm>> GetAccountFeaturesAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        // GraphQL query to fetch the feature flags of the account
         string query = $@"
         query {{
           accountFeatures(query: {{ accountId: ""{accountId}"" }}) {{
@@ -110,7 +95,6 @@ public sealed class Manager(IGraphQLReader reader) : IManager
     /// Retrieves the current account's lifecycle status via the consolidated accountContext read.
     /// The read is allowed on non-operational accounts, so a suspended account still reports its status.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
     /// <returns>The status id, or null when unavailable.</returns>
     public async Task<short?> GetAccountStatusAsync(CancellationToken cancellationToken)
     {

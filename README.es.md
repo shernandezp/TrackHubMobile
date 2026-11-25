@@ -1,70 +1,62 @@
 # TrackHub Mobile
 
-[← Volver a la página principal](README.md) · [English](README.en.md)
+[English](README.md) · [Español](README.es.md)
 
-TrackHub Mobile es la aplicación .NET MAUI para conductores y operadores.
+<img src="https://raw.githubusercontent.com/shernandezp/TrackHub/main/TrackHub.AuthorityServer/src/Web/wwwroot/images/logo.png" alt="TrackHub" width="120" />
 
-> **Estado: trabajo en progreso.** El proyecto compila y autentica, pero el conjunto de funcionalidades todavía se está definiendo. Se deben esperar cambios que rompan compatibilidad (breaking changes).
+La app móvil para los usuarios de cuenta de [TrackHub](https://github.com/shernandezp/TrackHub),
+construida con .NET MAUI (Blazor Hybrid) para Android, iOS y Mac Catalyst: el tablero de la flota,
+el mapa en vivo, la lista y el detalle de transportadores, y el historial de posiciones leído desde
+TrackHub o directamente desde el proveedor GPS.
 
----
+> **Trabajo en progreso.** Espere cambios que rompan compatibilidad.
 
-## Descripción general
+Inicia sesión contra el AuthorityServer de TrackHub como `mobile_client` (`mobile_scope`) mediante
+una página de inicio de sesión propia de la app — OAuth 2.0 password grant más refresh tokens — y
+llama a las API GraphQL de Router y Manager.
 
-La aplicación se autentica contra el AuthorityServer de TrackHub con una página de inicio de sesión propia (OAuth 2.0 password grant + refresh tokens), y consume las API GraphQL de Manager y Router.
+## Estructura
 
-Hay dos clientes OAuth relevantes:
+| Proyecto | Contenido |
+|---|---|
+| `TrackHubMobile` | El host MAUI: cabeceras de plataforma, recursos, arranque de la app |
+| `TrackHubMobile.MauiLib` | Páginas, view models, servicios y los clientes GraphQL (`net10.0`) |
+| `tests/TrackHubMobile.Tests` | Pruebas NUnit sobre `TrackHubMobile.MauiLib` |
 
-| Client | Scope | Principal type |
-|---|---|---|
-| `mobile_client` | `mobile_scope` | `User` — un operador que usa la plataforma desde un teléfono |
-| `driver_mobile_client` | `driver_mobile_scope` | `Driver` — un conductor autenticado contra `security.driver_credentials` |
+## Compilar, ejecutar, probar
 
----
+Requiere el SDK de .NET 10 con el workload de MAUI (`dotnet workload install maui`), además del SDK
+de Android, o Xcode en macOS para iOS y Mac Catalyst.
 
-## Inicio rápido
+```bash
+git clone https://github.com/shernandezp/TrackHubMobile.git
+cd TrackHubMobile
 
-### Requisitos previos
+dotnet test tests/TrackHubMobile.Tests
+dotnet build TrackHubMobile/TrackHubMobile.csproj -t:Run -f net10.0-android
+```
 
-- .NET 10 SDK con los workloads de MAUI instalados (`dotnet workload install maui`)
-- Un AuthorityServer de TrackHub y el stack de backend en ejecución
-- Android SDK y/o Xcode, según la plataforma de destino
+Las URL del servidor, el cliente OAuth y el esquema de callback (`trackhubmobile://`) son constantes
+en `TrackHubMobile.MauiLib/Utils/Constants.cs`; apúntelas a su despliegue antes de compilar.
 
-### Pasos
+## Notas
 
-1. **Clonar**
-
-   ```bash
-   git clone https://github.com/shernandezp/TrackHubMobile.git
-   cd TrackHubMobile
-   ```
-
-2. **Apuntar la aplicación al backend** — las URLs base de la autoridad (authority) y de la API viven en la configuración de la aplicación.
-
-3. **Compilar y ejecutar** para el framework de destino:
-
-   ```bash
-   dotnet build -t:Run -f net10.0-android
-   ```
-
----
-
-## Notas específicas del proyecto
-
-- **Los principals de tipo driver deben nombrarse explícitamente.** `AuthorizeAttribute.PrincipalTypes` tiene por defecto `"User,ServiceClient"`, por lo que una solicitud de backend que un driver necesite alcanzar debe llevar `PrincipalTypes = "…,Driver"`. Un atributo que no establece la propiedad **no** está sin restricciones.
-- **Las capacidades orientadas al conductor están controladas por la feature de cuenta `driver-mobile`**, que se verifica del lado del servidor. Un tenant que no la tenga verá `FEATURE_DISABLED`.
-- **Los dispositivos se vinculan** mediante `security.driver_device_registrations`.
-- La aplicación se comunica con las mismas superficies GraphQL que el portal web; **los cambios de contrato en el backend también la afectan**, pero no está cubierta por la verificación de deriva (drift) del codegen del portal.
-
----
+- **El servidor debe permitir el password grant para `mobile_client`** — `"passwordGrant": true` en
+  ese cliente dentro del `clients.json` del despliegue. Sin él, el inicio de sesión responde
+  `unauthorized_client`.
+- `NuGet.config` agrega el feed nightly de MAUI junto a nuget.org.
+- La app usa las mismas superficies GraphQL que el portal web, así que los cambios de contrato del
+  backend también la afectan — pero no está cubierta por la verificación de desviación del codegen
+  del portal.
 
 ## Documentación
 
-- **Técnica** — la [wiki de TrackHub](https://github.com/shernandezp/TrackHub/wiki): [Security and Identity](https://github.com/shernandezp/TrackHub/wiki/Security-and-Identity), [Architecture](https://github.com/shernandezp/TrackHub/wiki/Architecture), [Technology](https://github.com/shernandezp/TrackHub/wiki/Technology)
+- **Técnica** — la [wiki de TrackHub](https://github.com/shernandezp/TrackHub/wiki):
+  [Security and Identity](https://github.com/shernandezp/TrackHub/wiki/Security-and-Identity),
+  [Architecture](https://github.com/shernandezp/TrackHub/wiki/Architecture)
+- **Despliegue** — [TrackHub.Deployment](https://github.com/shernandezp/TrackHub/tree/main/TrackHub.Deployment)
 - **Usuario** — en el portal web: el botón de Ayuda o **F1** en cualquier pantalla
-- **Despliegue** — [TrackHub.Deployment](https://github.com/shernandezp/TrackHub.Deployment)
-
----
 
 ## Licencia
 
-Licencia Apache 2.0. Consulte el [archivo LICENSE](https://www.apache.org/licenses/LICENSE-2.0) para más información.
+Licencia Apache 2.0 — vea [LICENSE.txt](LICENSE.txt).
