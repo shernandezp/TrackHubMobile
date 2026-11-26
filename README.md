@@ -34,7 +34,7 @@ TrackHub Mobile is the .NET MAUI (Blazor Hybrid) monitoring application for acco
 
 | Repository | Purpose |
 |---|---|
-| [TrackHubCommon](https://github.com/shernandezp/TrackHubCommon) | Shared library, distributed as local NuGet packages |
+| [TrackHubCommon](https://github.com/shernandezp/TrackHubCommon) | Shared library used by every backend service |
 | [TrackHub.AuthorityServer](https://github.com/shernandezp/TrackHub.AuthorityServer) | Authorization service (OAuth 2.0 / OpenID Connect) |
 | [TrackHubSecurity](https://github.com/shernandezp/TrackHubSecurity) | Security API — users, roles, policies, permissions |
 | [TrackHub.Manager](https://github.com/shernandezp/TrackHub.Manager) | Management API — master data |

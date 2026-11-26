@@ -31,23 +31,20 @@ public class TokenHelper
         }
         try
         {
-            // Split the token into its parts (header, payload, signature)
             var parts = token.Split('.');
             if (parts.Length != 3)
             {
-                return false; // Invalid token format
+                return false;
             }
 
-            // Decode the payload (second part of the token)
             var payloadJson = Base64UrlDecode(parts[1]);
             var payload = JsonSerializer.Deserialize<JwtPayload>(payloadJson);
 
             if (payload == null || payload.Exp == null)
             {
-                return false; // Missing expiration claim
+                return false;
             }
 
-            // Convert expiration time to a UTC DateTimeOffset
             var expirationTime = DateTimeOffset.FromUnixTimeSeconds(payload.Exp.Value);
             var currentTime = DateTimeOffset.UtcNow;
 
