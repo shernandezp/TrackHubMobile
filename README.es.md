@@ -20,12 +20,12 @@ llama a las API GraphQL de Router y Manager.
 | Proyecto | Contenido |
 |---|---|
 | `TrackHubMobile` | El host MAUI: cabeceras de plataforma, recursos, arranque de la app |
-| `TrackHubMobile.MauiLib` | Páginas, view models, servicios y los clientes GraphQL (`net10.0`) |
+| `TrackHubMobile.MauiLib` | Páginas, view models, servicios y los clientes GraphQL (`net11.0`) |
 | `tests/TrackHubMobile.Tests` | Pruebas NUnit sobre `TrackHubMobile.MauiLib` |
 
 ## Compilar, ejecutar, probar
 
-Requiere el SDK de .NET 10 con el workload de MAUI (`dotnet workload install maui`), además del SDK
+Requiere el SDK de .NET 11 con el workload de MAUI (`dotnet workload install maui`), además del SDK
 de Android, o Xcode en macOS para iOS y Mac Catalyst.
 
 ```bash
@@ -33,7 +33,7 @@ git clone https://github.com/shernandezp/TrackHubMobile.git
 cd TrackHubMobile
 
 dotnet test tests/TrackHubMobile.Tests
-dotnet build TrackHubMobile/TrackHubMobile.csproj -t:Run -f net10.0-android
+dotnet build TrackHubMobile/TrackHubMobile.csproj -t:Run -f net11.0-android
 ```
 
 Las URL del servidor, el cliente OAuth y el esquema de callback (`trackhubmobile://`) son constantes
