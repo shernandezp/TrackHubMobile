@@ -158,7 +158,16 @@ public partial class PositionHistory : IDisposable
         }
     }
 
-    private async Task GoBackAsync() => await JS.InvokeVoidAsync("history.back");
+    private async Task GoBackAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("history.back");
+        }
+        catch (JSException)
+        {
+        }
+    }
 
     private async Task SetSourceAsync(bool stored)
     {

@@ -17,8 +17,8 @@ namespace TrackHubMobile.Helpers;
 
 public static class ServiceHelper
 {
-    public static IServiceProvider Services { get; set; }
+    public static IServiceProvider Services { get; set; } = null!;
 
-    public static T GetService<T>() where T : class =>
+    public static T? GetService<T>() where T : class =>
         Services.GetService(typeof(T)) as T;
 }

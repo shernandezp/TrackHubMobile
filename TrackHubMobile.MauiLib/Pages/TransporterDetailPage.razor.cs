@@ -61,7 +61,16 @@ public partial class TransporterDetailPage(
         }
     }
 
-    private async Task GoBackAsync() => await JS.InvokeVoidAsync("history.back");
+    private async Task GoBackAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("history.back");
+        }
+        catch (JSException)
+        {
+        }
+    }
 
     public new void Dispose()
     {

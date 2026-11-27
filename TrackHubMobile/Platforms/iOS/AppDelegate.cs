@@ -10,7 +10,10 @@ public class AppDelegate : MauiUIApplicationDelegate
 
     public override bool OpenUrl(UIApplication app, NSUrl url, NSDictionary options)
     {
-        var uri = new Uri(url.AbsoluteString);
+        if (url.AbsoluteString is not { } absolute)
+            return false;
+
+        var uri = new Uri(absolute);
 
         if (WebAuthenticator.Default.OpenUrl(uri))
             return true;

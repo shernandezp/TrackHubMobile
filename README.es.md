@@ -44,7 +44,6 @@ en `TrackHubMobile.MauiLib/Utils/Constants.cs`; apúntelas a su despliegue antes
 - **El servidor debe permitir el password grant para `mobile_client`** — `"passwordGrant": true` en
   ese cliente dentro del `clients.json` del despliegue. Sin él, el inicio de sesión responde
   `unauthorized_client`.
-- `NuGet.config` agrega el feed nightly de MAUI junto a nuget.org.
 - La app usa las mismas superficies GraphQL que el portal web, así que los cambios de contrato del
   backend también la afectan — pero no está cubierta por la verificación de desviación del codegen
   del portal.
